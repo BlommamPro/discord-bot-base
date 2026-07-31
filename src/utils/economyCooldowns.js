@@ -3,7 +3,7 @@ import { User } from '../models/User.js';
 
 export async function checkDbCooldown(userId, commandName, cooldownMinutes) {
   const user = await getUserData(userId);
-  const lastUsed = user.cooldowns?.get(commandName);
+  const lastUsed = user.cooldowns?.[commandName];
 
   if (!lastUsed) {
     return { onCooldown: false, timeLeft: 0, nextTimestamp: 0 };

@@ -27,14 +27,16 @@ export default {
       });
     }
 
-    const now = new Date();
+    const nowMs = Date.now();
     let newStreak = 1;
 
-    if (userData.lastDaily) {
-      const last = new Date(userData.lastDaily);
-      const diffHours = (now - last) / (1000 * 60 * 60);
+    // Usar lastDaily o cooldowns.daily para calcular racha
+    const lastDailyRaw = userData.lastDaily || userData.cooldowns?.daily;
+    if (lastDailyRaw) {
+      const lastMs = new Date(lastDailyRaw).getTime();
+      const diffHours = (nowMs - lastMs) / (1000 * 60 * 60);
       if (diffHours >= 24 && diffHours < 48) {
-        newStreak = userData.dailyStreak + 1;
+        newStreak = (userData.dailyStreak || 0) + 1;
       }
     }
 
@@ -45,17 +47,17 @@ export default {
       username: interaction.user.username,
       $inc: { balance: totalReward },
       dailyStreak: newStreak,
-      lastDaily: now
+      lastDaily: new Date(nowMs)
     });
     await setDbCooldown(interaction.user.id, 'daily');
 
-    const nextDaily = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const nextTimestamp = Math.floor(nextDaily.getTime() / 1000);
+    // Calcular próximo daily correctamente
+    const nextMs = nowMs + 24 * 60 * 60 * 1000;
+    const nextTimestamp = Math.floor(nextMs / 1000);
 
     const embed = successEmbed(
       `Reclamaste **${totalReward} coins**!` +
-      (newStreak > 1 ? `
-🔥 Racha de **${newStreak} días**! (+${streakBonus} bonus)` : '')
+      (newStreak > 1 ? `\n🔥 Racha de **${newStreak} días**! (+${streakBonus} bonus)` : '')
     );
     embed.setFooter({ text: `Vuelve a reclamar <t:${nextTimestamp}:R>` });
 

@@ -16,8 +16,7 @@ const UserSchema = new mongoose.Schema({
     boughtAt: { type: Date, default: Date.now }
   }],
   cooldowns: {
-    type: Map,
-    of: Date,
+    type: Object,
     default: {}
   },
   createdAt: { type: Date, default: Date.now }
