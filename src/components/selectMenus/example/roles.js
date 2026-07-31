@@ -1,0 +1,49 @@
+import { successEmbed, errorEmbed } from '../../../utils/embeds.js';
+
+/**
+ * Este select maneja customIds como:
+ * - example-roles
+ * - example-roles-{userId}
+ */
+
+export default {
+  customId: 'example-roles',
+
+  PERMISSIONS: [],
+  BOT_PERMISSIONS: [],
+  OWNER: false,
+  COOLDOWN: 10,
+
+  async execute(client, interaction, args, guildData, userData) {
+    const selectedRole = interaction.values[0];
+    
+    // Verificar que el rol existe
+    const role = interaction.guild.roles.cache.get(selectedRole);
+    if (!role) {
+      return interaction.reply({ embeds: [errorEmbed('Ese rol no existe')], ephemeral: true });
+    }
+
+    // Verificar que el bot puede gestionar roles
+    if (!role.editable) {
+      return interaction.reply({ 
+        embeds: [errorEmbed('No tengo permisos para darte ese rol')], 
+        ephemeral: true 
+      });
+    }
+
+    // Quitar o dar el rol
+    if (interaction.member.roles.cache.has(selectedRole)) {
+      await interaction.member.roles.remove(selectedRole);
+      await interaction.reply({ 
+        embeds: [successEmbed(`Rol <@&${selectedRole}> removido`)], 
+        ephemeral: true 
+      });
+    } else {
+      await interaction.member.roles.add(selectedRole);
+      await interaction.reply({ 
+        embeds: [successEmbed(`Rol <@&${selectedRole}> añadido`)], 
+        ephemeral: true 
+      });
+    }
+  }
+};
