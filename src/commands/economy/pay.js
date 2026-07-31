@@ -1,0 +1,65 @@
+import { SlashCommandBuilder } from 'discord.js';
+import { successEmbed, errorEmbed } from '../../utils/embeds.js';
+import { updateUserData } from '../../utils/guildData.js';
+import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
+
+export default {
+  CMD: new SlashCommandBuilder()
+    .setName('pay')
+    .setDescription('Transfiere coins a otro usuario')
+    .setDMPermission(false)
+    .addUserOption(opt =>
+      opt.setName('usuario')
+         .setDescription('Usuario a transferir')
+         .setRequired(true)
+    )
+    .addIntegerOption(opt =>
+      opt.setName('cantidad')
+         .setDescription('Cantidad de coins')
+         .setRequired(true)
+         .setMinValue(1)
+    ),
+
+  PERMISSIONS: [],
+  BOT_PERMISSIONS: [],
+  OWNER: false,
+  COOLDOWN: 0,
+  GUILD_ONLY: true,
+
+  async execute(client, interaction, guildData, userData) {
+    const target = interaction.options.getUser('usuario');
+    const amount = interaction.options.getInteger('cantidad');
+
+    if (target.id === interaction.user.id) {
+      return interaction.reply({ embeds: [errorEmbed('No puedes transferirte coins a ti mismo.')], ephemeral: true });
+    }
+
+    if (target.bot) {
+      return interaction.reply({ embeds: [errorEmbed('No puedes transferirle coins a un bot.')], ephemeral: true });
+    }
+
+    const cd = await checkDbCooldown(interaction.user.id, 'pay', 1);
+    if (cd.onCooldown) {
+      return interaction.reply({
+        embeds: [errorEmbed(`Espera antes de hacer otra transferencia. <t:${cd.nextTimestamp}:R>.`)],
+        ephemeral: true
+      });
+    }
+
+    if ((userData?.balance || 0) < amount) {
+      return interaction.reply({
+        embeds: [errorEmbed(`No tienes suficientes coins. Tienes **${userData.balance}** y quieres enviar **${amount}**.`)],
+        ephemeral: true
+      });
+    }
+
+    await updateUserData(interaction.user.id, { $inc: { balance: -amount } });
+    await updateUserData(target.id, { $inc: { balance: amount }, username: target.username });
+    await setDbCooldown(interaction.user.id, 'pay');
+
+    const embed = successEmbed(`Transferiste **${amount} coins** a ${target}!`);
+    embed.setTitle('💸 Transferencia');
+
+    await interaction.reply({ embeds: [embed] });
+  }
+};

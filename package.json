@@ -5,11 +5,15 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "dev": "node --env-file=.env.dev --watch src/index.js",
     "cmd:deploy": "node src/utils/deployCommands.js",
+    "cmd:deploy:dev": "node --env-file=.env.dev src/utils/deployCommands.js",
     "cmd:delete": "node src/utils/deleteCommands.js",
+    "cmd:delete:dev": "node --env-file=.env.dev src/utils/deleteCommands.js",
     "cmd:list": "node src/utils/listCommands.js",
-    "cmd:reset": "node src/utils/deleteCommands.js && node src/utils/deployCommands.js"
+    "cmd:list:dev": "node --env-file=.env.dev src/utils/listCommands.js",
+    "cmd:reset": "node src/utils/deleteCommands.js && node src/utils/deployCommands.js",
+    "cmd:reset:dev": "node --env-file=.env.dev src/utils/deleteCommands.js && node --env-file=.env.dev src/utils/deployCommands.js"
   },
   "dependencies": {
     "discord.js": "^14.27.0",

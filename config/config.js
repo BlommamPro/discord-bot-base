@@ -16,6 +16,6 @@ export const config = {
   status: process.env.STATUS || 'online',
   activity: {
     type: process.env.ACTIVITY_TYPE || 'Playing',
-    name: process.env.ACTIVITY_NAME || 'Probando el bot en modo desarrollo'
+    name: process.env.ACTIVITY_NAME || 'EstrellaStudios ⭐'
   }
 };

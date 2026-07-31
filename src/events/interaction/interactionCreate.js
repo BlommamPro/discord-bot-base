@@ -1,15 +1,15 @@
-import { PermissionsBitField } from 'discord.js';
 import { config } from '../../../config/config.js';
 import { checkCooldown } from '../../utils/cooldowns.js';
 import { checkPermissions, checkBotPermissions } from '../../utils/permissions.js';
 import { parseCustomId } from '../../utils/parseCustomId.js';
 import { errorEmbed, cooldownEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
+import { getGuildData, getUserData } from '../../utils/guildData.js';
 
 export default {
   name: 'interactionCreate',
   once: false,
-  
+
   async execute(client, interaction) {
     // ===== SLASH COMMANDS =====
     if (interaction.isChatInputCommand()) {
@@ -35,9 +35,9 @@ export default {
       if (command.PERMISSIONS?.length && interaction.guild) {
         const permCheck = checkPermissions(interaction.member, command.PERMISSIONS);
         if (!permCheck.allowed) {
-          return interaction.reply({ 
-            embeds: [errorEmbed(`Necesitas los permisos: \`${permCheck.missing.join(', ')}\``)], 
-            ephemeral: true 
+          return interaction.reply({
+            embeds: [errorEmbed(`Necesitas los permisos: \`${permCheck.missing.join(', ')}\``)],
+            ephemeral: true
           });
         }
       }
@@ -46,38 +46,43 @@ export default {
       if (command.BOT_PERMISSIONS?.length && interaction.guild) {
         const botPermCheck = checkBotPermissions(interaction.guild.members.me, command.BOT_PERMISSIONS);
         if (!botPermCheck.allowed) {
-          return interaction.reply({ 
-            embeds: [errorEmbed(`Necesito los permisos: \`${botPermCheck.missing.join(', ')}\``)], 
-            ephemeral: true 
+          return interaction.reply({
+            embeds: [errorEmbed(`Necesito los permisos: \`${botPermCheck.missing.join(', ')}\``)],
+            ephemeral: true
           });
         }
       }
 
       // Cooldown
       const { onCooldown, timeLeft } = checkCooldown(
-        client, 
-        command.CMD.name, 
-        interaction.user.id, 
+        client,
+        command.CMD.name,
+        interaction.user.id,
         command.COOLDOWN || 3
       );
       if (onCooldown) {
         return interaction.reply({ embeds: [cooldownEmbed(timeLeft)], ephemeral: true });
       }
 
-      // Ejecutar
+      // Ejecutar con datos de guild y usuario desde MongoDB
       try {
-        // Obtener datos de guild si existe MongoDB
         let guildData = null;
         let userData = null;
-        // guildData = await Guild.findOne({ guildId: interaction.guildId });
-        
+
+        if (interaction.guildId) {
+          guildData = await getGuildData(interaction.guildId);
+        }
+
+        // userData es GLOBAL (balance, xp, inventario) — siempre cargar
+        userData = await getUserData(interaction.user.id, interaction.user.username);
+
         await command.execute(client, interaction, guildData, userData);
         logger.cmd(`[SLASH] ${interaction.user.tag} → /${command.CMD.name}`);
       } catch (err) {
         logger.error(`Error en /${command.CMD.name}:`, err);
         const reply = { embeds: [errorEmbed('Ocurrió un error al ejecutar el comando')], ephemeral: true };
-        interaction.replied || interaction.deferred 
-          ? interaction.followUp(reply) 
+        interaction.replied || interaction.deferred
+          ? interaction.followUp(reply)
           : interaction.reply(reply);
       }
     }
@@ -90,6 +95,13 @@ export default {
       try {
         let guildData = null;
         let userData = null;
+
+        if (interaction.guildId) {
+          guildData = await getGuildData(interaction.guildId);
+        }
+
+        userData = await getUserData(interaction.user.id, interaction.user.username);
+
         await menu.execute(client, interaction, guildData, userData);
         logger.cmd(`[CTX] ${interaction.user.tag} → ${menu.CMD.name}`);
       } catch (err) {
@@ -146,18 +158,18 @@ async function handleComponent(client, interaction, type) {
   if (handler.PERMISSIONS?.length && interaction.guild) {
     const permCheck = checkPermissions(interaction.member, handler.PERMISSIONS);
     if (!permCheck.allowed) {
-      return interaction.reply({ 
-        embeds: [errorEmbed(`Necesitas los permisos: \`${permCheck.missing.join(', ')}\``)], 
-        ephemeral: true 
+      return interaction.reply({
+        embeds: [errorEmbed(`Necesitas los permisos: \`${permCheck.missing.join(', ')}\``)],
+        ephemeral: true
       });
     }
   }
 
   // Cooldown
   const { onCooldown, timeLeft } = checkCooldown(
-    client, 
-    handler.customId, 
-    interaction.user.id, 
+    client,
+    handler.customId,
+    interaction.user.id,
     handler.COOLDOWN || 3
   );
   if (onCooldown) {
@@ -167,13 +179,20 @@ async function handleComponent(client, interaction, type) {
   try {
     let guildData = null;
     let userData = null;
+
+    if (interaction.guildId) {
+      guildData = await getGuildData(interaction.guildId);
+    }
+
+    userData = await getUserData(interaction.user.id, interaction.user.username);
+
     await handler.execute(client, interaction, args, guildData, userData);
     logger.cmd(`[${type.toUpperCase()}] ${interaction.user.tag} → ${interaction.customId}`);
   } catch (err) {
     logger.error(`Error en ${type} ${interaction.customId}:`, err);
     const reply = { embeds: [errorEmbed('Ocurrió un error')], ephemeral: true };
-    interaction.replied || interaction.deferred 
-      ? interaction.followUp(reply) 
+    interaction.replied || interaction.deferred
+      ? interaction.followUp(reply)
       : interaction.reply(reply);
   }
 }

@@ -9,10 +9,30 @@ export function createEmbed(options = {}) {
   if (options.title) embed.setTitle(options.title);
   if (options.description) embed.setDescription(options.description);
   if (options.fields) embed.addFields(options.fields);
-  if (options.thumbnail) embed.setThumbnail(options.thumbnail);
-  if (options.image) embed.setImage(options.image);
-  if (options.footer) embed.setFooter({ text: options.footer.text, iconURL: options.footer.icon });
-  else embed.setFooter({ text: 'Discord Bot Base' });
+  
+  // Thumbnail: puede ser string o { url: string }
+  if (options.thumbnail) {
+    if (typeof options.thumbnail === 'string') {
+      embed.setThumbnail(options.thumbnail);
+    } else if (options.thumbnail.url) {
+      embed.setThumbnail(options.thumbnail.url);
+    }
+  }
+  
+  // Image: puede ser string o { url: string }
+  if (options.image) {
+    if (typeof options.image === 'string') {
+      embed.setImage(options.image);
+    } else if (options.image.url) {
+      embed.setImage(options.image.url);
+    }
+  }
+  
+  if (options.footer) {
+    embed.setFooter({ text: options.footer.text, iconURL: options.footer.icon });
+  } else {
+    embed.setFooter({ text: 'Discord Bot Base' });
+  }
 
   return embed;
 }

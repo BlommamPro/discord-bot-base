@@ -1,5 +1,7 @@
 node_modules/
 .env
+.env.dev
 config.json
 pnpm-lock.yaml
+test-token.js
 *.log
