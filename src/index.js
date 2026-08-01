@@ -1,10 +1,10 @@
-import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js';
-import { config } from '../config/config.js';
-import { loadEvents } from './handlers/eventHandler.js';
-import { loadCommands } from './handlers/commandHandler.js';
-import { loadComponents } from './handlers/componentHandler.js';
-import { connectDB } from './utils/database.js';
-import { logger } from './utils/logger.js';
+import { Client, GatewayIntentBits, Partials, Collection } from "discord.js";
+import { config } from "../config/config.js";
+import { loadEvents } from "./handlers/eventHandler.js";
+import { loadCommands } from "./handlers/commandHandler.js";
+import { loadComponents } from "./handlers/componentHandler.js";
+import { connectDB } from "./utils/database.js";
+import { logger } from "./utils/logger.js";
 
 const client = new Client({
   intents: [
@@ -13,10 +13,17 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildPresences,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages
+    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildEmojisAndStickers
   ],
-  partials: [Partials.Channel, Partials.Message, Partials.User, Partials.GuildMember],
-  allowedMentions: { parse: ['users', 'roles'], repliedUser: true }
+  partials: [
+    Partials.Channel,
+    Partials.Message,
+    Partials.User,
+    Partials.GuildMember,
+  ],
+  allowedMentions: { parse: ["users", "roles"], repliedUser: true },
 });
 
 // ===== COLECCIONES =====
@@ -37,7 +44,7 @@ await loadEvents(client);
 await loadCommands(client);
 await loadComponents(client);
 
-client.login(config.token).catch(err => {
-  logger.error('Error al iniciar sesión:', err);
+client.login(config.token).catch((err) => {
+  logger.error("Error al iniciar sesión:", err);
   process.exit(1);
 });

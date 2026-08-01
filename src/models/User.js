@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
     quantity: { type: Number, default: 1 },
     boughtAt: { type: Date, default: Date.now }
   }],
+  badges: { type: [String], default: [] },
   cooldowns: {
     type: Object,
     default: {}
