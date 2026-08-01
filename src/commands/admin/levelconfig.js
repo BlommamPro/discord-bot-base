@@ -2,6 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { LevelConfig } from '../../models/LevelConfig.js';
 import { GuildLevel } from '../../models/GuildLevel.js';
+import { emojis, e } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -56,7 +57,7 @@ export default {
         { enabled: enable },
         { upsert: true }
       );
-      return interaction.reply({ embeds: [successEmbed(`Sistema de niveles: ${enable ? '✅ Activado' : '❌ Desactivado'}`)] });
+      return interaction.reply({ embeds: [successEmbed(`Sistema de niveles: ${enable ?  `${emojis.animate_on} Activado` : ` ${emojis.animate_off} Desactivado`}`)] });
     }
 
     if (sub === 'role') {
