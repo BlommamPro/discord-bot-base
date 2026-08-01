@@ -1,14 +1,16 @@
 import mongoose from 'mongoose';
 
-const GuildLevelSchema = new mongoose.Schema({
-  guildId: { type: String, required: true },
-  userId: { type: String, required: true },
-  xp: { type: Number, default: 0 },
-  level: { type: Number, default: 1 },
-  messages: { type: Number, default: 0 }
+const LevelConfigSchema = new mongoose.Schema({
+  guildId: { type: String, required: true, unique: true },
+  enabled: { type: Boolean, default: false },
+  roles: [{
+    level: { type: Number, required: true },
+    roleId: { type: String, required: true }
+  }],
+  announceChannel: { type: String, default: null },
+  xpMin: { type: Number, default: 15 },
+  xpMax: { type: Number, default: 25 },
+  cooldownSeconds: { type: Number, default: 60 }
 });
 
-GuildLevelSchema.index({ guildId: 1, userId: 1 }, { unique: true });
-GuildLevelSchema.index({ guildId: 1, xp: -1 });
-
-export const GuildLevel = mongoose.model('GuildLevel', GuildLevelSchema);
+export const LevelConfig = mongoose.model('LevelConfig', LevelConfigSchema);

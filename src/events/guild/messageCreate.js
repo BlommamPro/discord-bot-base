@@ -1,66 +1,105 @@
-import { getUserData, updateUserData } from '../../utils/guildData.js';
+import { getGuildData } from '../../utils/guildData.js';
+import { addGuildXp, getLevelConfig, getXpForLevel } from '../../utils/levelSystem.js';
+import { updateUserData } from '../../utils/guildData.js';
+import { checkAndAwardBadge } from '../../utils/badges.js';
 import { logger } from '../../utils/logger.js';
 
-// XP aleatorio por mensaje (entre 15 y 25)
+// XP global
 const MIN_XP = 15;
 const MAX_XP = 25;
 
-// Fórmula: nivel ^ 2 * 100 = XP necesario para ese nivel
-// Nivel 1 → 100 XP, Nivel 2 → 400 XP, Nivel 3 → 900 XP, etc.
-function getXpForLevel(level) {
+// Cooldown anti-spam global
+const globalXpCooldowns = new Map();
+// Cooldown anti-spam por servidor
+const guildXpCooldowns = new Map();
+
+function getXpForGlobalLevel(level) {
   return level * level * 100;
 }
-
-// Cooldown por usuario para evitar spam de XP (60 segundos)
-const xpCooldowns = new Map();
 
 export default {
   name: 'messageCreate',
   once: false,
 
   async execute(client, message) {
-    // Ignorar bots, DM, y mensajes sin guild
     if (message.author.bot || !message.guild) return;
 
     const userId = message.author.id;
-
-    // Cooldown de 60s para ganar XP (anti-spam)
+    const guildId = message.guild.id;
     const now = Date.now();
-    if (xpCooldowns.has(userId)) {
-      if (now - xpCooldowns.get(userId) < 60000) return;
+
+    // ===== XP GLOBAL =====
+    if (!globalXpCooldowns.has(userId) || now - globalXpCooldowns.get(userId) > 60000) {
+      globalXpCooldowns.set(userId, now);
+
+      const userData = await getGuildData(userId);
+      const xpGain = Math.floor(Math.random() * (MAX_XP - MIN_XP + 1)) + MIN_XP;
+      let newXp = (userData?.xp || 0) + xpGain;
+      let newLevel = userData?.level || 1;
+      let leveledUp = false;
+
+      while (newXp >= getXpForGlobalLevel(newLevel)) {
+        newXp -= getXpForGlobalLevel(newLevel);
+        newLevel++;
+        leveledUp = true;
+      }
+
+      await updateUserData(userId, {
+        username: message.author.username,
+        $inc: { messages: 1 },
+        xp: newXp,
+        level: newLevel
+      });
+
+      // Badges globales
+      if (newLevel >= 10) await checkAndAwardBadge(userId, 'level_10');
+      if (newLevel >= 50) await checkAndAwardBadge(userId, 'level_50');
+
+      if (leveledUp) {
+        logger.success(`${message.author.tag} subió al nivel global ${newLevel}!`);
+      }
     }
-    xpCooldowns.set(userId, now);
 
-    // Obtener datos del usuario
-    const data = await getUserData(userId, message.author.username);
+    // ===== XP POR SERVIDOR =====
+    const levelConfig = await getLevelConfig(guildId);
+    if (levelConfig.enabled) {
+      const key = `${guildId}-${userId}`;
+      const cooldownMs = (levelConfig.cooldownSeconds || 60) * 1000;
 
-    // XP aleatorio
-    const xpGain = Math.floor(Math.random() * (MAX_XP - MIN_XP + 1)) + MIN_XP;
-    let newXp = data.xp + xpGain;
-    let newLevel = data.level;
-    let leveledUp = false;
+      if (!guildXpCooldowns.has(key) || now - guildXpCooldowns.get(key) > cooldownMs) {
+        guildXpCooldowns.set(key, now);
 
-    // Verificar si sube de nivel
-    const xpNeeded = getXpForLevel(newLevel);
-    if (newXp >= xpNeeded) {
-      newLevel++;
-      newXp = newXp - xpNeeded; // XP sobrante pasa al siguiente nivel
-      leveledUp = true;
-    }
+        const xpAmount = Math.floor(
+          Math.random() * ((levelConfig.xpMax || 25) - (levelConfig.xpMin || 15) + 1)
+        ) + (levelConfig.xpMin || 15);
 
-    // Guardar en DB
-    await updateUserData(userId, {
-      username: message.author.username,
-      $inc: { messages: 1 },
-      xp: newXp,
-      level: newLevel
-    });
+        const result = await addGuildXp(guildId, userId, xpAmount);
 
-    // Log de subida de nivel (opcional, puedes quitarlo)
-    if (leveledUp) {
-      logger.success(`${message.author.tag} subió al nivel ${newLevel}!`);
-      // Opcional: enviar mensaje en el canal
-      // message.channel.send(`🎉 ¡<@${userId}> ha subido al nivel **${newLevel}**!`);
+        if (result.leveledUp) {
+          // Dar rol si está configurado
+          const roleConfig = levelConfig.roles.find(r => r.level === result.newLevel);
+          if (roleConfig) {
+            const member = message.member;
+            if (member && !member.roles.cache.has(roleConfig.roleId)) {
+              const role = message.guild.roles.cache.get(roleConfig.roleId);
+              if (role && role.position < message.guild.members.me.roles.highest.position) {
+                await member.roles.add(role).catch(() => {});
+              }
+            }
+          }
+
+          // Anunciar
+          if (levelConfig.announceChannel) {
+            const channel = message.guild.channels.cache.get(levelConfig.announceChannel);
+            if (channel?.isTextBased()) {
+              channel.send(`🎉 ¡<@${userId}> ha subido al nivel **${result.newLevel}** en este servidor!`)
+                .catch(() => {});
+            }
+          }
+
+          logger.success(`${message.author.tag} subió al nivel ${result.newLevel} en ${message.guild.name}`);
+        }
+      }
     }
   }
 };

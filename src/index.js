@@ -22,6 +22,7 @@ const client = new Client({
     Partials.Message,
     Partials.User,
     Partials.GuildMember,
+    Partials.Reaction,
   ],
   allowedMentions: { parse: ["users", "roles"], repliedUser: true },
 });

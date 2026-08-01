@@ -59,7 +59,7 @@ export default {
       `Reclamaste **${totalReward} coins**!` +
       (newStreak > 1 ? `\n🔥 Racha de **${newStreak} días**! (+${streakBonus} bonus)` : '')
     );
-    embed.setFooter({ text: `Vuelve a reclamar <t:${nextTimestamp}:R>` });
+    embed.setFooter({ text: `Vuelve a reclamar 24H` });
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -1,12 +1,23 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { getGuildLeaderboard } from '../../utils/levelSystem.js';
 import { User } from '../../models/User.js';
 
 export default {
   CMD: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('Top 10 usuarios con más nivel')
-    .setDMPermission(false),
+    .setDescription('Tabla de clasificación')
+    .setDMPermission(false)
+    .addStringOption(opt =>
+      opt.setName('tipo')
+         .setDescription('Qué leaderboard ver')
+         .setRequired(false)
+         .addChoices(
+           { name: '🏠 Niveles del Servidor', value: 'guild_levels' },
+           { name: '🌍 Niveles Globales', value: 'global_levels' },
+           { name: '💰 Más Ricos', value: 'coins' }
+         )
+    ),
 
   PERMISSIONS: [],
   BOT_PERMISSIONS: [],
@@ -15,27 +26,58 @@ export default {
   GUILD_ONLY: true,
 
   async execute(client, interaction, guildData, userData) {
-    // Obtener top 10 por nivel y XP
-    const topUsers = await User.find()
-      .sort({ level: -1, xp: -1 })
-      .limit(10);
+    const type = interaction.options.getString('tipo') || 'guild_levels';
 
-    if (topUsers.length === 0) {
-      return interaction.reply({ content: 'No hay datos todavía.', ephemeral: true });
+    if (type === 'guild_levels') {
+      const top = await getGuildLeaderboard(interaction.guildId, 10);
+
+      if (top.length === 0) {
+        return interaction.reply({ embeds: [errorEmbed('Nadie tiene niveles en este servidor todavía.')], ephemeral: true });
+      }
+
+      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+      const description = top.map((u, i) =>
+        `${medals[i] || '🔹'} <@${u.userId}> — Nivel **${u.level}** | XP: \`${u.xp}\``
+      ).join('\n');
+
+      const embed = createEmbed({
+        title: `🏆 Top Niveles — ${interaction.guild.name}`,
+        description
+      });
+
+      return interaction.reply({ embeds: [embed] });
     }
 
-    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+    if (type === 'global_levels') {
+      const top = await User.find().sort({ level: -1, xp: -1 }).limit(10);
 
-    const description = topUsers.map((u, i) => {
-      const medal = medals[i] || '🔹';
-      return `${medal} <@${u.userId}> — Nivel **${u.level}** | XP: \`${u.xp}\` | 💰 \`${u.balance}\``;
-    }).join('\n');
+      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+      const description = top.map((u, i) =>
+        `${medals[i] || '🔹'} <@${u.userId}> — Nivel **${u.level}** | XP: \`${u.xp}\``
+      ).join('\n');
 
-    const embed = createEmbed({
-      title: '🏆 Tabla de Clasificación',
-      description
-    });
+      const embed = createEmbed({
+        title: '🏆 Top Niveles Globales',
+        description
+      });
 
-    await interaction.reply({ embeds: [embed] });
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    if (type === 'coins') {
+      const top = await User.find().sort({ balance: -1 }).limit(10);
+
+      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+      const description = top.map((u, i) =>
+        `${medals[i] || '🔹'} <@${u.userId}> — **${u.balance} coins**`
+      ).join('\n');
+
+      const embed = createEmbed({
+        title: '🏆 Top Más Ricos',
+        description
+      });
+
+      return interaction.reply({ embeds: [embed] });
+    }
   }
 };

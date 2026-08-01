@@ -1,6 +1,13 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
 import { getUserData } from '../../utils/guildData.js';
+import { getGuildLevel } from '../../utils/levelSystem.js';
+import { getAllBadgesText } from '../../utils/badges.js';
+import { getXpForLevel } from '../../utils/levelSystem.js';
+
+function getGlobalXpForLevel(level) {
+  return level * level * 100;
+}
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -21,18 +28,29 @@ export default {
 
   async execute(client, interaction, guildData, userData) {
     const target = interaction.options.getUser('usuario') || interaction.user;
-    
     const data = await getUserData(target.id, target.username);
+
+    // Nivel del servidor
+    const guildLevelData = await getGuildLevel(interaction.guildId, target.id);
+    const guildXpNeeded = getXpForLevel(guildLevelData.level);
+    const guildProgress = Math.round((guildLevelData.xp / guildXpNeeded) * 100);
+
+    // Nivel global
+    const globalXpNeeded = getGlobalXpForLevel(data.level);
+    const globalProgress = Math.round((data.xp / globalXpNeeded) * 100);
 
     const embed = createEmbed({
       title: `👤 Perfil de ${target.username}`,
-      thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }), // ✅ STRING, no objeto
+      thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }),
       fields: [
         { name: '💰 Dinero', value: `\`${data.balance} coins\``, inline: true },
-        { name: '⭐ Nivel', value: `\`${data.level}\``, inline: true },
-        { name: '✨ XP', value: `\`${data.xp}\``, inline: true },
-        { name: '🔥 Racha Diaria', value: `\`${data.dailyStreak} días\``, inline: true },
+        { name: '🏠 Nivel Servidor', value: `\`${guildLevelData.level}\` (${guildProgress}%)`, inline: true },
+        { name: '🌍 Nivel Global', value: `\`${data.level}\` (${globalProgress}%)`, inline: true },
+        { name: '✨ XP Servidor', value: `\`${guildLevelData.xp}/${guildXpNeeded}\``, inline: true },
+        { name: '✨ XP Global', value: `\`${data.xp}/${globalXpNeeded}\``, inline: true },
         { name: '💬 Mensajes', value: `\`${data.messages}\``, inline: true },
+        { name: '🔥 Racha Diaria', value: `\`${data.dailyStreak} días\``, inline: true },
+        { name: '🎖️ Badges', value: getAllBadgesText(data.badges) || 'Ninguna', inline: false },
         { name: '📅 Cuenta creada', value: `<t:${Math.floor(target.createdTimestamp / 1000)}:R>`, inline: true }
       ]
     });

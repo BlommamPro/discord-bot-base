@@ -1,0 +1,142 @@
+import { Giveaway } from '../models/Giveaway.js';
+import { createEmbed } from './embeds.js';
+import { logger } from './logger.js';
+
+const editCooldowns = new Map();
+
+export async function getActiveGiveaways() {
+  return await Giveaway.find({ ended: false, endTime: { $gt: new Date() } });
+}
+
+export async function endGiveaway(client, giveawayId) {
+  const gw = await Giveaway.findOne({ giveawayId, ended: false });
+  if (!gw) return null;
+
+  const guild = await client.guilds.fetch(gw.guildId).catch(() => null);
+  if (!guild) return null;
+
+  const channel = await guild.channels.fetch(gw.channelId).catch(() => null);
+  if (!channel) return null;
+
+  const message = await channel.messages.fetch(gw.messageId).catch(() => null);
+  if (!message) return null;
+
+  const reaction = message.reactions.cache.get('🎉');
+  let users = [];
+
+  if (reaction) {
+    const fetched = await reaction.users.fetch();
+    users = fetched.filter(u => !u.bot).map(u => u.id);
+  }
+
+  const allParticipants = [...new Set([...gw.participants, ...users])];
+
+  const winners = [];
+  if (allParticipants.length > 0) {
+    const pool = [...allParticipants];
+    const count = Math.min(gw.winnerCount, pool.length);
+    for (let i = 0; i < count; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      winners.push(pool.splice(idx, 1)[0]);
+    }
+  }
+
+  gw.ended = true;
+  gw.winners = winners;
+  gw.participants = allParticipants;
+  await gw.save();
+
+  const winnerText = winners.length > 0
+    ? winners.map(id => `<@${id}>`).join(', ')
+    : 'Nadie participó';
+
+  const embed = createEmbed({
+    title: '🎉 Sorteo Finalizado',
+    description: [
+      `**Premio:** ${gw.prize}`,
+      `**Ganador(es):** ${winnerText}`,
+      `**Participantes:** ${allParticipants.length}`,
+      `**ID:** \`${gw.giveawayId}\``
+    ].join('\n'),
+    footer: { text: `Finalizado • ID: ${gw.giveawayId}` }
+  });
+
+  await message.edit({ embeds: [embed], components: [] });
+
+  await channel.send({
+    content: winners.length > 0
+      ? `🎉 ¡Felicidades ${winners.map(id => `<@${id}>`).join(', ')}! Ganaste **${gw.prize}**`
+      : `😢 Nadie participó en el sorteo de **${gw.prize}**`,
+    embeds: [embed]
+  });
+
+  return gw;
+}
+
+export async function rerollGiveaway(giveawayId) {
+  const gw = await Giveaway.findOne({ giveawayId, ended: true });
+  if (!gw || gw.participants.length === 0) return null;
+
+  const pool = [...gw.participants];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+export async function addParticipant(giveawayId, userId) {
+  const gw = await Giveaway.findOne({ giveawayId, ended: false });
+  if (!gw) return false;
+
+  if (!gw.participants.includes(userId)) {
+    gw.participants.push(userId);
+    await gw.save();
+    return true;
+  }
+  return false;
+}
+
+export async function updateGiveawayEmbed(message, giveawayId) {
+  const now = Date.now();
+  const lastEdit = editCooldowns.get(giveawayId) || 0;
+  if (now - lastEdit < 8000) return;
+
+  const gw = await Giveaway.findOne({ giveawayId, ended: false });
+  if (!gw) return;
+
+  const timeLeft = Math.ceil((gw.endTime - now) / 1000);
+  if (timeLeft <= 0) return;
+
+  const embed = createEmbed({
+    title: '🎉 Sorteo',
+    description: [
+      `**Premio:** ${gw.prize}`,
+      `**Ganadores:** ${gw.winnerCount}`,
+      `**Termina:** <t:${Math.floor(gw.endTime / 1000)}:R>`,
+      `**Participantes:** ${gw.participants.length}`,
+      ``,
+      `Reacciona con 🎉 para participar`
+    ].join('\n'),
+    footer: { text: `ID: ${gw.giveawayId} • Creado por ${gw.hostedBy}` }
+  });
+
+  try {
+    await message.edit({ embeds: [embed] });
+    editCooldowns.set(giveawayId, now);
+  } catch { /* ignorar */ }
+}
+
+export function startGiveawayChecker(client) {
+  setInterval(async () => {
+    const now = new Date();
+    const ending = await Giveaway.find({
+      ended: false,
+      endTime: { $lte: now }
+    });
+
+    for (const gw of ending) {
+      try {
+        await endGiveaway(client, gw.giveawayId);
+      } catch (err) {
+        logger.error('Error finalizando giveaway', gw.giveawayId, err.message);
+      }
+    }
+  }, 30000);
+}

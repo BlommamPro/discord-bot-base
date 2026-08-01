@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { createEmbed, errorEmbed, successEmbed } from '../../utils/embeds.js';
 import { getUserWarns, clearUserWarns, removeWarn } from '../../utils/warns.js';
 
 export default {
