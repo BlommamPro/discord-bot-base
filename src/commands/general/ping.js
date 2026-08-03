@@ -15,7 +15,10 @@ export default {
   NSFW: false,
 
   async execute(client, interaction, guildData, userData) {
-    const sent = await interaction.reply({ content: '🏓 Calculando...', fetchReply: true });
+    await interaction.reply({ content: '🏓 Calculando...' });
+    
+    // fetchReply() como método SÍ funciona y no está obsoleto
+    const sent = await interaction.fetchReply();
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
 
     const embed = createEmbed({

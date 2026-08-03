@@ -70,7 +70,7 @@ export default {
       embeds: [generateEmbed(currentPage)],
       components: totalPages > 1 ? [generateButtons(currentPage)] : [],
       ephemeral: true,
-      fetchReply: true
+      withResponse: true
     });
 
     // Si solo hay una página, no necesitamos collector
