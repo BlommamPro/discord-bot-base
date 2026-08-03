@@ -1,6 +1,6 @@
-import { getGuildData } from '../../utils/guildData.js';
+// src/events/guild/messageCreate.js
+import { getGuildData, getUserData, updateUserData } from '../../utils/guildData.js';
 import { addGuildXp, getLevelConfig, getXpForLevel } from '../../utils/levelSystem.js';
-import { updateUserData } from '../../utils/guildData.js';
 import { checkAndAwardBadge } from '../../utils/badges.js';
 import { logger } from '../../utils/logger.js';
 
@@ -32,7 +32,8 @@ export default {
     if (!globalXpCooldowns.has(userId) || now - globalXpCooldowns.get(userId) > 60000) {
       globalXpCooldowns.set(userId, now);
 
-      const userData = await getGuildData(userId);
+      // FIX: usar getUserData en lugar de getGuildData
+      const userData = await getUserData(userId, message.author.username);
       const xpGain = Math.floor(Math.random() * (MAX_XP - MIN_XP + 1)) + MIN_XP;
       let newXp = (userData?.xp || 0) + xpGain;
       let newLevel = userData?.level || 1;
@@ -77,7 +78,7 @@ export default {
 
         if (result.leveledUp) {
           // Dar rol si está configurado
-          const roleConfig = levelConfig.roles.find(r => r.level === result.newLevel);
+          const roleConfig = levelConfig.roles?.find(r => r.level === result.newLevel);
           if (roleConfig) {
             const member = message.member;
             if (member && !member.roles.cache.has(roleConfig.roleId)) {

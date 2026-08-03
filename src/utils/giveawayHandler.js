@@ -8,8 +8,12 @@ export async function getActiveGiveaways() {
   return await Giveaway.find({ ended: false, endTime: { $gt: new Date() } });
 }
 
-export async function endGiveaway(client, giveawayId) {
-  const gw = await Giveaway.findOne({ giveawayId, ended: false });
+// ===== FIX: acepta guildId opcional para filtrar por servidor =====
+export async function endGiveaway(client, giveawayId, guildId = null) {
+  const query = { giveawayId, ended: false };
+  if (guildId) query.guildId = guildId;  // ← filtro por servidor
+
+  const gw = await Giveaway.findOne(query);
   if (!gw) return null;
 
   const guild = await client.guilds.fetch(gw.guildId).catch(() => null);
@@ -73,8 +77,12 @@ export async function endGiveaway(client, giveawayId) {
   return gw;
 }
 
-export async function rerollGiveaway(giveawayId) {
-  const gw = await Giveaway.findOne({ giveawayId, ended: true });
+// ===== FIX: acepta guildId opcional =====
+export async function rerollGiveaway(giveawayId, guildId = null) {
+  const query = { giveawayId, ended: true };
+  if (guildId) query.guildId = guildId;  // ← filtro por servidor
+
+  const gw = await Giveaway.findOne(query);
   if (!gw || gw.participants.length === 0) return null;
 
   const pool = [...gw.participants];
@@ -133,7 +141,7 @@ export function startGiveawayChecker(client) {
 
     for (const gw of ending) {
       try {
-        await endGiveaway(client, gw.giveawayId);
+        await endGiveaway(client, gw.giveawayId);  // sin guildId, el checker sigue funcionando
       } catch (err) {
         logger.error('Error finalizando giveaway', gw.giveawayId, err.message);
       }

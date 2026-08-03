@@ -1,8 +1,9 @@
+// src/commands/admin/levelconfig.js
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { LevelConfig } from '../../models/LevelConfig.js';
 import { GuildLevel } from '../../models/GuildLevel.js';
-import { emojis, e } from '../../utils/emojis.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -49,34 +50,48 @@ export default {
 
   async execute(client, interaction, guildData, userData) {
     const sub = interaction.options.getSubcommand();
+    const guildId = interaction.guildId;
 
     if (sub === 'toggle') {
       const enable = interaction.options.getBoolean('activar');
       await LevelConfig.findOneAndUpdate(
-        { guildId: interaction.guildId },
+        { guildId },
         { enabled: enable },
-        { upsert: true }
+        { upsert: true, new: true }
       );
-      return interaction.reply({ embeds: [successEmbed(`Sistema de niveles: ${enable ?  `${emojis.animate_on} Activado` : ` ${emojis.animate_off} Desactivado`}`)] });
+      return interaction.reply({ 
+        embeds: [successEmbed(`Sistema de niveles: ${enable ? `${emojis.animate_on} Activado` : `${emojis.animate_off} Desactivado`}`)] 
+      });
     }
 
     if (sub === 'role') {
       const level = interaction.options.getInteger('nivel');
       const role = interaction.options.getRole('rol');
 
-      const config = await LevelConfig.findOneAndUpdate(
-        { guildId: interaction.guildId },
-        { $set: { [`levelRoles.${level}`]: role.id } },
+      // FIX: usar array "roles" en lugar de objeto "levelRoles"
+      await LevelConfig.findOneAndUpdate(
+        { guildId },
+        { $pull: { roles: { level } } },  // quitar si ya existe
+        { upsert: true }
+      );
+      await LevelConfig.findOneAndUpdate(
+        { guildId },
+        { $push: { roles: { level, roleId: role.id } } },
         { upsert: true, new: true }
       );
-      return interaction.reply({ embeds: [successEmbed(`Al llegar al nivel ${level} se dará el rol ${role}.`)] });
+
+      return interaction.reply({ 
+        embeds: [successEmbed(`Al llegar al nivel ${level} se dará el rol ${role}.`)] 
+      });
     }
 
     if (sub === 'removerole') {
       const level = interaction.options.getInteger('nivel');
+      
+      // FIX: usar $pull en array "roles"
       await LevelConfig.findOneAndUpdate(
-        { guildId: interaction.guildId },
-        { $unset: { [`levelRoles.${level}`]: '' } }
+        { guildId },
+        { $pull: { roles: { level } } }
       );
       return interaction.reply({ embeds: [successEmbed(`Rol del nivel ${level} eliminado.`)] });
     }
@@ -84,7 +99,7 @@ export default {
     if (sub === 'channel') {
       const channel = interaction.options.getChannel('canal');
       await LevelConfig.findOneAndUpdate(
-        { guildId: interaction.guildId },
+        { guildId },
         { announceChannel: channel.id },
         { upsert: true }
       );
@@ -96,21 +111,23 @@ export default {
 
       if (target) {
         await GuildLevel.findOneAndUpdate(
-          { guildId: interaction.guildId, userId: target.id },
+          { guildId, userId: target.id },
           { xp: 0, level: 1 },
           { upsert: true }
         );
         return interaction.reply({ embeds: [successEmbed(`Nivel de ${target} reiniciado.`)] });
       } else {
-        await GuildLevel.deleteMany({ guildId: interaction.guildId });
+        await GuildLevel.deleteMany({ guildId });
         return interaction.reply({ embeds: [successEmbed('Todos los niveles del servidor han sido reiniciados.')] });
       }
     }
 
     if (sub === 'view') {
-      const config = await LevelConfig.findOne({ guildId: interaction.guildId });
-      const rolesText = config?.levelRoles
-        ? Object.entries(config.levelRoles).map(([lvl, rid]) => `Nivel ${lvl}: <@&${rid}>`).join('\n')
+      const config = await LevelConfig.findOne({ guildId });
+      
+      // FIX: leer desde array "roles"
+      const rolesText = config?.roles?.length
+        ? config.roles.map(r => `Nivel ${r.level}: <@&${r.roleId}>`).join('\n')
         : 'Ninguno';
 
       const embed = createEmbed({

@@ -22,10 +22,15 @@ export default {
 
   async execute(client, interaction, guildData, userData) {
     const id = interaction.options.getString('id').toUpperCase();
-    const result = await endGiveaway(client, id);
+    
+    // ===== FIX: pasar guildId para que solo funcione en este servidor =====
+    const result = await endGiveaway(client, id, interaction.guildId);
 
     if (!result) {
-      return interaction.reply({ embeds: [errorEmbed('No encontré ese sorteo o ya terminó.')], ephemeral: true });
+      return interaction.reply({ 
+        embeds: [errorEmbed('No encontré ese sorteo activo en este servidor.')], 
+        ephemeral: true 
+      });
     }
 
     await interaction.reply({
