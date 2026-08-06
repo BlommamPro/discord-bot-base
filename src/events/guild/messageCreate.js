@@ -32,7 +32,6 @@ export default {
     if (!globalXpCooldowns.has(userId) || now - globalXpCooldowns.get(userId) > 60000) {
       globalXpCooldowns.set(userId, now);
 
-      // FIX: usar getUserData en lugar de getGuildData
       const userData = await getUserData(userId, message.author.username);
       const xpGain = Math.floor(Math.random() * (MAX_XP - MIN_XP + 1)) + MIN_XP;
       let newXp = (userData?.xp || 0) + xpGain;
@@ -45,11 +44,14 @@ export default {
         leveledUp = true;
       }
 
+      // FIX: Usar $set para campos planos y $inc para messages en el mismo update
       await updateUserData(userId, {
-        username: message.author.username,
-        $inc: { messages: 1 },
-        xp: newXp,
-        level: newLevel
+        $set: {
+          username: message.author.username,
+          xp: newXp,
+          level: newLevel
+        },
+        $inc: { messages: 1 }
       });
 
       // Badges globales
@@ -77,7 +79,6 @@ export default {
         const result = await addGuildXp(guildId, userId, xpAmount);
 
         if (result.leveledUp) {
-          // Dar rol si está configurado
           const roleConfig = levelConfig.roles?.find(r => r.level === result.newLevel);
           if (roleConfig) {
             const member = message.member;
@@ -89,7 +90,6 @@ export default {
             }
           }
 
-          // Anunciar
           if (levelConfig.announceChannel) {
             const channel = message.guild.channels.cache.get(levelConfig.announceChannel);
             if (channel?.isTextBased()) {

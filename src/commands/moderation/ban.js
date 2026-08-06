@@ -37,6 +37,11 @@ export default {
       return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario en el servidor')], ephemeral: true });
     }
 
+    // FIX: Verificar jerarquía de roles
+    if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+      return interaction.reply({ embeds: [errorEmbed('No puedes banear a alguien con un rol igual o superior al tuyo.')], ephemeral: true });
+    }
+
     if (!member.bannable) {
       return interaction.reply({ embeds: [errorEmbed('No tengo permisos para banear a ese usuario')], ephemeral: true });
     }

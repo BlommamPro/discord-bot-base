@@ -71,9 +71,12 @@ export default {
         return interaction.reply({ embeds: [errorEmbed('No tengo permisos para darte ese rol.')], ephemeral: true });
       }
 
-      await interaction.member.roles.add(role).catch(() => {
+      // FIX: Usar try/catch real en lugar de .catch() con return
+      try {
+        await interaction.member.roles.add(role);
+      } catch {
         return interaction.reply({ embeds: [errorEmbed('No pude darte el rol.')], ephemeral: true });
-      });
+      }
     }
 
     await updateUserData(interaction.user.id, { $inc: { balance: -totalPrice } });
