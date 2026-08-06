@@ -31,7 +31,7 @@ export function createEmbed(options = {}) {
   if (options.footer) {
     embed.setFooter({ text: options.footer.text, iconURL: options.footer.icon });
   } else {
-    embed.setFooter({ text: 'Discord Bot Base' });
+    embed.setFooter({ text: 'EstrellaStudios' });
   }
 
   return embed;
