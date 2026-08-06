@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { createEmbed, errorEmbed, successEmbed } from '../../utils/embeds.js';
 import { getUserWarns, clearUserWarns, removeWarn } from '../../utils/warns.js';
 
@@ -62,7 +62,7 @@ export default {
     if (action === 'remove_last') {
       const warns = await getUserWarns(interaction.guildId, target.id);
       if (warns.length === 0) {
-        return interaction.reply({ embeds: [errorEmbed('Este usuario no tiene warns.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('Este usuario no tiene warns.')], flags: MessageFlags.Ephemeral });
       }
 
       await removeWarn(warns[0]._id);

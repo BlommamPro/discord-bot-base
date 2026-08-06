@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
@@ -31,26 +31,22 @@ export default {
     const amount = interaction.options.getInteger('cantidad');
 
     if (target.id === interaction.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes transferirte coins a ti mismo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes transferirte coins a ti mismo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.bot) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes transferirle coins a un bot.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes transferirle coins a un bot.')], flags: MessageFlags.Ephemeral });
     }
 
     const cd = await checkDbCooldown(interaction.user.id, 'pay', 1);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Espera antes de hacer otra transferencia. <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`Espera antes de hacer otra transferencia. <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     if ((userData?.balance || 0) < amount) {
       return interaction.reply({
-        embeds: [errorEmbed(`No tienes suficientes coins. Tienes **${userData.balance}** y quieres enviar **${amount}**.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`No tienes suficientes coins. Tienes **${userData.balance}** y quieres enviar **${amount}**.`)], flags: MessageFlags.Ephemeral });
     }
 
     await updateUserData(interaction.user.id, { $inc: { balance: -amount } });

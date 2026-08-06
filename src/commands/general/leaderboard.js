@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { createEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getGuildLeaderboard } from '../../utils/levelSystem.js';
 import { User } from '../../models/User.js';
@@ -32,7 +32,7 @@ export default {
       const top = await getGuildLeaderboard(interaction.guildId, 10);
 
       if (top.length === 0) {
-        return interaction.reply({ embeds: [errorEmbed('Nadie tiene niveles en este servidor todavía.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('Nadie tiene niveles en este servidor todavía.')], flags: MessageFlags.Ephemeral });
       }
 
       const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];

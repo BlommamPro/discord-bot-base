@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
@@ -34,9 +34,7 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'crime', 60);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`La policía te vigila. Vuelve a intentarlo <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`La policía te vigila. Vuelve a intentarlo <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     const success = Math.random() < 0.55;

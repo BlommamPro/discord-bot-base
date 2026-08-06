@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder } from 'discord.js';
+import { SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder , MessageFlags} from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
 
 // Emojis por defecto para categorías conocidas
@@ -85,6 +85,6 @@ export default {
 
     const row = new ActionRowBuilder().addComponents(selectMenu);
 
-    await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    await interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral });
   }
 };

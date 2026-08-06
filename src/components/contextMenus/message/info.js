@@ -1,4 +1,4 @@
-import { ContextMenuCommandBuilder, ApplicationCommandType } from 'discord.js';
+import { ContextMenuCommandBuilder, ApplicationCommandType , MessageFlags} from 'discord.js';
 import { createEmbed } from '../../../utils/embeds.js';
 
 export default {
@@ -24,6 +24,6 @@ export default {
       ]
     });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   }
 };

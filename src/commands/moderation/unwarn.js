@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { Warn } from '../../models/Warn.js';
 
@@ -31,9 +31,7 @@ export default {
 
     if (!warn) {
       return interaction.reply({
-        embeds: [errorEmbed('No encontré ninguna advertencia con ese ID en este servidor.')],
-        ephemeral: true
-      });
+        embeds: [errorEmbed('No encontré ninguna advertencia con ese ID en este servidor.')], flags: MessageFlags.Ephemeral });
     }
 
     // Guardar info para el mensaje de confirmación

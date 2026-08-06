@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { createEmbed, errorEmbed, successEmbed } from '../../utils/embeds.js';
 
 export default {
@@ -25,25 +25,25 @@ export default {
     const reason = interaction.options.getString('razon') || 'No especificada';
 
     if (user.id === interaction.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes banearte a ti mismo')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes banearte a ti mismo')], flags: MessageFlags.Ephemeral });
     }
 
     if (user.id === client.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes banearme a mí')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes banearme a mí')], flags: MessageFlags.Ephemeral });
     }
 
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
     if (!member) {
-      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario en el servidor')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario en el servidor')], flags: MessageFlags.Ephemeral });
     }
 
     // FIX: Verificar jerarquía de roles
     if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes banear a alguien con un rol igual o superior al tuyo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes banear a alguien con un rol igual o superior al tuyo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (!member.bannable) {
-      return interaction.reply({ embeds: [errorEmbed('No tengo permisos para banear a ese usuario')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No tengo permisos para banear a ese usuario')], flags: MessageFlags.Ephemeral });
     }
 
     await member.ban({ reason: `${interaction.user.tag}: ${reason}` });

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { createEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getShopItems } from '../../utils/shop.js';
 
@@ -19,9 +19,7 @@ export default {
 
     if (items.length === 0) {
       return interaction.reply({
-        embeds: [errorEmbed('La tienda de este servidor está vacía. Los admins pueden usar `/shopconfig` para añadir items.')],
-        ephemeral: true
-      });
+        embeds: [errorEmbed('La tienda de este servidor está vacía. Los admins pueden usar `/shopconfig` para añadir items.')], flags: MessageFlags.Ephemeral });
     }
 
     // Construir descripción con items más claros

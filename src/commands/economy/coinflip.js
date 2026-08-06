@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
@@ -36,17 +36,13 @@ export default {
 
     if ((userData?.balance || 0) < amount) {
       return interaction.reply({
-        embeds: [errorEmbed(`No tienes suficientes coins. Tienes **${userData.balance}** y apostaste **${amount}**.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`No tienes suficientes coins. Tienes **${userData.balance}** y apostaste **${amount}**.`)], flags: MessageFlags.Ephemeral });
     }
 
     const cd = await checkDbCooldown(interaction.user.id, 'coinflip', 0.17);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Espera un momento antes de volver a apostar. <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`Espera un momento antes de volver a apostar. <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     const result = Math.random() < 0.5 ? 'cara' : 'cruz';

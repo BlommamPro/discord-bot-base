@@ -1,3 +1,4 @@
+import { MessageFlags } from 'discord.js';
 import { config } from '../../../config/config.js';
 import { checkCooldown } from '../../utils/cooldowns.js';
 import { checkPermissions, checkBotPermissions } from '../../utils/permissions.js';
@@ -18,17 +19,17 @@ export default {
 
       // Owner only
       if (command.OWNER && !config.ownerIds.includes(interaction.user.id)) {
-        return interaction.reply({ embeds: [errorEmbed('Solo los owners pueden usar este comando')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('Solo los owners pueden usar este comando')], flags: MessageFlags.Ephemeral });
       }
 
       // Guild only
       if (command.GUILD_ONLY && !interaction.guild) {
-        return interaction.reply({ embeds: [errorEmbed('Este comando solo se puede usar en servidores')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('Este comando solo se puede usar en servidores')], flags: MessageFlags.Ephemeral });
       }
 
       // NSFW
       if (command.NSFW && !interaction.channel.nsfw) {
-        return interaction.reply({ embeds: [errorEmbed('Este comando solo se puede usar en canales NSFW')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('Este comando solo se puede usar en canales NSFW')], flags: MessageFlags.Ephemeral });
       }
 
       // Permisos de usuario
@@ -37,7 +38,7 @@ export default {
         if (!permCheck.allowed) {
           return interaction.reply({
             embeds: [errorEmbed(`Necesitas los permisos: \`${permCheck.missing.join(', ')}\``)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
       }
@@ -48,7 +49,7 @@ export default {
         if (!botPermCheck.allowed) {
           return interaction.reply({
             embeds: [errorEmbed(`Necesito los permisos: \`${botPermCheck.missing.join(', ')}\``)],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
       }
@@ -61,7 +62,7 @@ export default {
         command.COOLDOWN || 3
       );
       if (onCooldown) {
-        return interaction.reply({ embeds: [cooldownEmbed(timeLeft)], ephemeral: true });
+        return interaction.reply({ embeds: [cooldownEmbed(timeLeft)], flags: MessageFlags.Ephemeral });
       }
 
       // Ejecutar con datos de guild y usuario desde MongoDB
@@ -80,7 +81,7 @@ export default {
         logger.cmd(`[SLASH] ${interaction.user.tag} → /${command.CMD.name}`);
       } catch (err) {
         logger.error(`Error en /${command.CMD.name}:`, err);
-        const reply = { embeds: [errorEmbed('Ocurrió un error al ejecutar el comando')], ephemeral: true };
+        const reply = { embeds: [errorEmbed('Ocurrió un error al ejecutar el comando')], flags: MessageFlags.Ephemeral };
         interaction.replied || interaction.deferred
           ? interaction.followUp(reply)
           : interaction.reply(reply);
@@ -106,7 +107,7 @@ export default {
         logger.cmd(`[CTX] ${interaction.user.tag} → ${menu.CMD.name}`);
       } catch (err) {
         logger.error(`Error en context menu ${menu.CMD.name}:`, err);
-        interaction.reply({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], ephemeral: true });
+        interaction.reply({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], flags: MessageFlags.Ephemeral });
       }
     }
 
@@ -151,7 +152,7 @@ async function handleComponent(client, interaction, type) {
 
   // Owner only
   if (handler.OWNER && !config.ownerIds.includes(interaction.user.id)) {
-    return interaction.reply({ embeds: [errorEmbed('Solo los owners pueden usar esto')], ephemeral: true });
+    return interaction.reply({ embeds: [errorEmbed('Solo los owners pueden usar esto')], flags: MessageFlags.Ephemeral });
   }
 
   // Permisos
@@ -160,7 +161,7 @@ async function handleComponent(client, interaction, type) {
     if (!permCheck.allowed) {
       return interaction.reply({
         embeds: [errorEmbed(`Necesitas los permisos: \`${permCheck.missing.join(', ')}\``)],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }
@@ -173,7 +174,7 @@ async function handleComponent(client, interaction, type) {
     handler.COOLDOWN || 3
   );
   if (onCooldown) {
-    return interaction.reply({ embeds: [cooldownEmbed(timeLeft)], ephemeral: true });
+    return interaction.reply({ embeds: [cooldownEmbed(timeLeft)], flags: MessageFlags.Ephemeral });
   }
 
   try {
@@ -190,7 +191,7 @@ async function handleComponent(client, interaction, type) {
     logger.cmd(`[${type.toUpperCase()}] ${interaction.user.tag} → ${interaction.customId}`);
   } catch (err) {
     logger.error(`Error en ${type} ${interaction.customId}:`, err);
-    const reply = { embeds: [errorEmbed('Ocurrió un error')], ephemeral: true };
+    const reply = { embeds: [errorEmbed('Ocurrió un error')], flags: MessageFlags.Ephemeral };
     interaction.replied || interaction.deferred
       ? interaction.followUp(reply)
       : interaction.reply(reply);

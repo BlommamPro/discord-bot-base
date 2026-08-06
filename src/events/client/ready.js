@@ -4,7 +4,7 @@ import { logger } from '../../utils/logger.js';
 import { startGiveawayChecker } from '../../utils/giveawayHandler.js';
 
 export default {
-  name: 'ready',
+  name: 'clientReady',
   once: true,
 
   execute(client) {

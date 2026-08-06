@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { createEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
@@ -24,9 +24,7 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'inventory', 0.05);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Espera un momento antes de revisar tu inventario. <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`Espera un momento antes de revisar tu inventario. <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     const target = interaction.options.getUser('usuario') || interaction.user;
@@ -34,9 +32,7 @@ export default {
 
     if (!data.inventory || data.inventory.length === 0) {
       return interaction.reply({
-        embeds: [errorEmbed(`${target.username} no tiene items en su inventario.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`${target.username} no tiene items en su inventario.`)], flags: MessageFlags.Ephemeral });
     }
 
     const items = data.inventory.map(item =>

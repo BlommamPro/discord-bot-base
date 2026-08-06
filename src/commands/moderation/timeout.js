@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { parseTime, TIME_LIMITS } from '../../utils/parseTime.js';
 
@@ -36,45 +36,41 @@ export default {
     const reason = interaction.options.getString('razon') || 'Sin razón';
 
     if (!target) {
-      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.id === interaction.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes darte timeout a ti mismo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes darte timeout a ti mismo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.id === client.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes darme timeout a mí.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes darme timeout a mí.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.roles.highest.position >= interaction.member.roles.highest.position) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes dar timeout a alguien con un rol igual o superior al tuyo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes dar timeout a alguien con un rol igual o superior al tuyo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (!target.moderatable) {
-      return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario. Puede que tenga un rol superior al mío.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario. Puede que tenga un rol superior al mío.')], flags: MessageFlags.Ephemeral });
     }
 
     // Parsear tiempo
     const parsed = parseTime(timeInput);
     if (!parsed) {
       return interaction.reply({
-        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h30m`, `7d`, `5m`, `30s`, `2d12h`...')],
-        ephemeral: true
-      });
+        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h30m`, `7d`, `5m`, `30s`, `2d12h`...')], flags: MessageFlags.Ephemeral });
     }
 
     // Límite de Discord: 28 días
     if (parsed.ms > TIME_LIMITS.timeout) {
       const maxText = parseTime('28d').text;
       return interaction.reply({
-        embeds: [errorEmbed(`El timeout máximo es **${maxText}** (límite de Discord).`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`El timeout máximo es **${maxText}** (límite de Discord).`)], flags: MessageFlags.Ephemeral });
     }
 
     if (target.communicationDisabledUntilTimestamp && target.communicationDisabledUntilTimestamp > Date.now()) {
-      return interaction.reply({ embeds: [errorEmbed('Ese usuario ya tiene un timeout activo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('Ese usuario ya tiene un timeout activo.')], flags: MessageFlags.Ephemeral });
     }
 
     try {
@@ -89,7 +85,7 @@ export default {
 
       await interaction.reply({ embeds: [embed] });
     } catch (err) {
-      return interaction.reply({ embeds: [errorEmbed(`No pude dar timeout: ${err.message}`)], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed(`No pude dar timeout: ${err.message}`)], flags: MessageFlags.Ephemeral });
     }
   }
 };

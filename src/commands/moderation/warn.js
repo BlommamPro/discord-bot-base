@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { addWarn, getWarnCount, checkAutoAction } from '../../utils/warns.js';
 
@@ -30,23 +30,23 @@ export default {
     const reason = interaction.options.getString('razon') || 'Sin razón';
 
     if (!target) {
-      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.id === interaction.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes warnerte a ti mismo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes warnerte a ti mismo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.id === client.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes warnearme a mí.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes warnearme a mí.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.roles.highest.position >= interaction.member.roles.highest.position) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes warnear a alguien con un rol igual o superior al tuyo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes warnear a alguien con un rol igual o superior al tuyo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (!target.moderatable) {
-      return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario.')], flags: MessageFlags.Ephemeral });
     }
 
     // Crear la warn en DB

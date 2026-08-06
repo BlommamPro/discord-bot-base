@@ -1,4 +1,4 @@
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder , MessageFlags} from 'discord.js';
 import { successEmbed } from '../../../utils/embeds.js';
 
 /**
@@ -26,9 +26,7 @@ export default {
     console.log(`Reporte: ${reportedUserId || 'General'} - ${reason} - ${details}`);
 
     await interaction.reply({ 
-      embeds: [successEmbed('Reporte enviado correctamente. Gracias por tu colaboración.')], 
-      ephemeral: true 
-    });
+      embeds: [successEmbed('Reporte enviado correctamente. Gracias por tu colaboración.')], flags: MessageFlags.Ephemeral });
   }
 };
 

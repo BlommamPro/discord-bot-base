@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { createShopItem, deleteShopItem, getShopItems } from '../../utils/shop.js';
 
@@ -61,7 +61,7 @@ export default {
         });
       } catch (err) {
         if (err.code === 11000) {
-          return interaction.reply({ embeds: [errorEmbed('Ya existe un item con ese ID.')], ephemeral: true });
+          return interaction.reply({ embeds: [errorEmbed('Ya existe un item con ese ID.')], flags: MessageFlags.Ephemeral });
         }
         throw err;
       }
@@ -72,7 +72,7 @@ export default {
       const result = await deleteShopItem(interaction.guildId, itemId);
 
       if (!result) {
-        return interaction.reply({ embeds: [errorEmbed('No encontré ese item.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('No encontré ese item.')], flags: MessageFlags.Ephemeral });
       }
 
       return interaction.reply({ embeds: [successEmbed(`Item \`${itemId}\` eliminado.`)] });
@@ -82,7 +82,7 @@ export default {
       const items = await getShopItems(interaction.guildId);
 
       if (items.length === 0) {
-        return interaction.reply({ embeds: [errorEmbed('La tienda está vacía.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('La tienda está vacía.')], flags: MessageFlags.Ephemeral });
       }
 
       const list = items.map(i =>

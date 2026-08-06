@@ -1,5 +1,5 @@
 // src/commands/moderation/kick.js
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 
 export default {
@@ -30,23 +30,23 @@ export default {
     const reason = interaction.options.getString('razon') || 'Sin razón';
 
     if (!target) {
-      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.id === interaction.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes expulsarte a ti mismo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes expulsarte a ti mismo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.id === client.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes expulsarme a mí.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes expulsarme a mí.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.roles.highest.position >= interaction.member.roles.highest.position) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes expulsar a alguien con un rol igual o superior al tuyo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes expulsar a alguien con un rol igual o superior al tuyo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (!target.kickable) {
-      return interaction.reply({ embeds: [errorEmbed('No puedo expulsar a ese usuario. Puede que tenga un rol superior al mío.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedo expulsar a ese usuario. Puede que tenga un rol superior al mío.')], flags: MessageFlags.Ephemeral });
     }
 
     try {
@@ -60,7 +60,7 @@ export default {
 
       await interaction.reply({ embeds: [embed] });
     } catch (err) {
-      return interaction.reply({ embeds: [errorEmbed(`No pude expulsar: ${err.message}`)], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed(`No pude expulsar: ${err.message}`)], flags: MessageFlags.Ephemeral });
     }
   }
 };

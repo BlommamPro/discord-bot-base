@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getWarnConfig, updateWarnConfig } from '../../utils/warns.js';
 
@@ -128,7 +128,7 @@ export default {
       config.actions = config.actions.filter(a => a.warns !== warns);
 
       if (config.actions.length === before) {
-        return interaction.reply({ embeds: [errorEmbed(`No hay acción configurada para ${warns} warns.`)], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed(`No hay acción configurada para ${warns} warns.`)], flags: MessageFlags.Ephemeral });
       }
 
       await updateWarnConfig(interaction.guildId, { actions: config.actions });

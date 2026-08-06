@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
@@ -35,9 +35,7 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'work', 30);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Ya trabajaste recientemente. Vuelve <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`Ya trabajaste recientemente. Vuelve <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     const reward = Math.floor(Math.random() * (MAX_REWARD - MIN_REWARD + 1)) + MIN_REWARD;

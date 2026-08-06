@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getUserData, updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
@@ -24,28 +24,24 @@ export default {
     const target = interaction.options.getUser('usuario');
 
     if (target.id === interaction.user.id) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes robarte a ti mismo.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes robarte a ti mismo.')], flags: MessageFlags.Ephemeral });
     }
 
     if (target.bot) {
-      return interaction.reply({ embeds: [errorEmbed('No puedes robarle a un bot.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No puedes robarle a un bot.')], flags: MessageFlags.Ephemeral });
     }
 
     const cd = await checkDbCooldown(interaction.user.id, 'rob', 120);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`La policía te tiene en la mira. Vuelve <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`La policía te tiene en la mira. Vuelve <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     const targetData = await getUserData(target.id, target.username);
 
     if ((targetData?.balance || 0) < 50) {
       return interaction.reply({
-        embeds: [errorEmbed(`${target.username} no tiene suficiente dinero para robarle.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`${target.username} no tiene suficiente dinero para robarle.`)], flags: MessageFlags.Ephemeral });
     }
 
     const success = Math.random() < 0.40;

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { createEmbed, errorEmbed } from '../../utils/embeds.js';
 
 const ITEMS_PER_PAGE = 10;
@@ -18,7 +18,7 @@ export default {
     const guilds = Array.from(client.guilds.cache.values());
 
     if (guilds.length === 0) {
-      return interaction.reply({ embeds: [errorEmbed('El bot no está en ningún servidor.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('El bot no está en ningún servidor.')], flags: MessageFlags.Ephemeral });
     }
 
     const totalPages = Math.ceil(guilds.length / ITEMS_PER_PAGE);
@@ -66,15 +66,15 @@ export default {
       return row;
     };
 
-    const message = await interaction.reply({
+    await interaction.reply({
       embeds: [generateEmbed(currentPage)],
       components: totalPages > 1 ? [generateButtons(currentPage)] : [],
-      ephemeral: true,
-      withResponse: true
+      flags: MessageFlags.Ephemeral
     });
 
-    // Si solo hay una página, no necesitamos collector
     if (totalPages <= 1) return;
+
+    const message = await interaction.fetchReply();
 
     const collector = message.createMessageComponentCollector({
       filter: (i) => i.user.id === interaction.user.id,

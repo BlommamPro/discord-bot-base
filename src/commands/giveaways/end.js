@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { errorEmbed, successEmbed } from '../../utils/embeds.js';
 import { endGiveaway } from '../../utils/giveawayHandler.js';
 
@@ -28,9 +28,7 @@ export default {
 
     if (!result) {
       return interaction.reply({ 
-        embeds: [errorEmbed('No encontré ese sorteo activo en este servidor.')], 
-        ephemeral: true 
-      });
+        embeds: [errorEmbed('No encontré ese sorteo activo en este servidor.')], flags: MessageFlags.Ephemeral });
     }
 
     await interaction.reply({

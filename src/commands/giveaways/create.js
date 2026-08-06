@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { createEmbed, errorEmbed, successEmbed } from '../../utils/embeds.js';
 import { Giveaway } from '../../models/Giveaway.js';
 import { parseTime } from '../../utils/parseTime.js';
@@ -51,9 +51,7 @@ export default {
     const parsed = parseTime(durationStr);
     if (!parsed) {
       return interaction.reply({
-        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h`, `30m`, `1d`, `2d12h`...')],
-        ephemeral: true
-      });
+        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h`, `30m`, `1d`, `2d12h`...')], flags: MessageFlags.Ephemeral });
     }
 
     const endTime = Date.now() + parsed.ms;
@@ -92,8 +90,6 @@ export default {
     });
 
     await interaction.reply({
-      embeds: [successEmbed(`Sorteo creado con ID \`${giveawayId}\`. Termina ${parsed.text}.`)],
-      ephemeral: true
-    });
+      embeds: [successEmbed(`Sorteo creado con ID \`${giveawayId}\`. Termina ${parsed.text}.`)], flags: MessageFlags.Ephemeral });
   }
 };

@@ -1,5 +1,5 @@
 // src/commands/moderation/clear.js
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ChannelType , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 
 export default {
@@ -40,17 +40,17 @@ export default {
 
     // Verificar que sea un canal de texto
     if (!targetChannel.isTextBased()) {
-      return interaction.reply({ embeds: [errorEmbed('Solo puedo borrar mensajes en canales de texto.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('Solo puedo borrar mensajes en canales de texto.')], flags: MessageFlags.Ephemeral });
     }
 
     // Verificar permisos del bot en ese canal
     const botMember = interaction.guild.members.me;
     const botPerms = targetChannel.permissionsFor(botMember);
     if (!botPerms.has('ManageMessages')) {
-      return interaction.reply({ embeds: [errorEmbed('No tengo permiso para borrar mensajes en ese canal.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('No tengo permiso para borrar mensajes en ese canal.')], flags: MessageFlags.Ephemeral });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
       let deletedCount = 0;

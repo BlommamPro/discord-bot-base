@@ -25,14 +25,10 @@ export default {
 
     if (userId && userId !== interaction.user.id) {
       return interaction.reply({ 
-        content: 'Este botón no es para ti.', 
-        ephemeral: true 
-      });
+        content: 'Este botón no es para ti.', flags: MessageFlags.Ephemeral });
     }
 
     await interaction.reply({ 
-      embeds: [successEmbed('¡Acción confirmada correctamente!')], 
-      ephemeral: true 
-    });
+      embeds: [successEmbed('¡Acción confirmada correctamente!')], flags: MessageFlags.Ephemeral });
   }
 };

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getShopItem, updateShopItemStock } from '../../utils/shop.js';
 import { updateUserData } from '../../utils/guildData.js';
@@ -34,48 +34,42 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'buy', 0.08);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Espera un momento antes de comprar de nuevo. <t:${cd.nextTimestamp}:R>.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`Espera un momento antes de comprar de nuevo. <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
     }
 
     const item = await getShopItem(interaction.guildId, itemId);
     if (!item) {
-      return interaction.reply({ embeds: [errorEmbed('Ese item no existe en la tienda.')], ephemeral: true });
+      return interaction.reply({ embeds: [errorEmbed('Ese item no existe en la tienda.')], flags: MessageFlags.Ephemeral });
     }
 
     const totalPrice = item.price * quantity;
 
     if ((userData?.balance || 0) < totalPrice) {
       return interaction.reply({
-        embeds: [errorEmbed(`No tienes suficientes coins. Necesitas **${totalPrice} coins** y tienes **${userData.balance}**.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`No tienes suficientes coins. Necesitas **${totalPrice} coins** y tienes **${userData.balance}**.`)], flags: MessageFlags.Ephemeral });
     }
 
     if (item.stock >= 0 && item.stock < quantity) {
       return interaction.reply({
-        embeds: [errorEmbed(`No hay suficiente stock. Quedan **${item.stock}** unidades.`)],
-        ephemeral: true
-      });
+        embeds: [errorEmbed(`No hay suficiente stock. Quedan **${item.stock}** unidades.`)], flags: MessageFlags.Ephemeral });
     }
 
     if (item.roleId) {
       const role = interaction.guild.roles.cache.get(item.roleId);
       if (!role) {
-        return interaction.reply({ embeds: [errorEmbed('El rol asociado a este item ya no existe.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('El rol asociado a este item ya no existe.')], flags: MessageFlags.Ephemeral });
       }
 
       const botMember = interaction.guild.members.me;
       if (!botMember.permissions.has('ManageRoles') || role.position >= botMember.roles.highest.position) {
-        return interaction.reply({ embeds: [errorEmbed('No tengo permisos para darte ese rol.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('No tengo permisos para darte ese rol.')], flags: MessageFlags.Ephemeral });
       }
 
       // FIX: Usar try/catch real en lugar de .catch() con return
       try {
         await interaction.member.roles.add(role);
       } catch {
-        return interaction.reply({ embeds: [errorEmbed('No pude darte el rol.')], ephemeral: true });
+        return interaction.reply({ embeds: [errorEmbed('No pude darte el rol.')], flags: MessageFlags.Ephemeral });
       }
     }
 
