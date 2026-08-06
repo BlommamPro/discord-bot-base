@@ -1,5 +1,6 @@
-import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { createEmbed, errorEmbed, successEmbed } from '../../utils/embeds.js';
+import { addModLog } from '../../utils/modlog.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -37,7 +38,6 @@ export default {
       return interaction.reply({ embeds: [errorEmbed('No pude encontrar a ese usuario en el servidor')], flags: MessageFlags.Ephemeral });
     }
 
-    // FIX: Verificar jerarquía de roles
     if (member.roles.highest.position >= interaction.member.roles.highest.position) {
       return interaction.reply({ embeds: [errorEmbed('No puedes banear a alguien con un rol igual o superior al tuyo.')], flags: MessageFlags.Ephemeral });
     }
@@ -47,6 +47,7 @@ export default {
     }
 
     await member.ban({ reason: `${interaction.user.tag}: ${reason}` });
+    await addModLog(interaction.guildId, user.id, interaction.user.id, 'ban', reason);
 
     const embed = successEmbed(`**${user.tag}** ha sido baneado.\n📝 Razón: \`${reason}\``);
     await interaction.reply({ embeds: [embed] });

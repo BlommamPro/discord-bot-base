@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { addWarn, getWarnCount, checkAutoAction } from '../../utils/warns.js';
+import { addModLog } from '../../utils/modlog.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -49,14 +50,15 @@ export default {
       return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario.')], flags: MessageFlags.Ephemeral });
     }
 
-    // Crear la warn en DB
-    await addWarn(interaction.guildId, target.id, interaction.user.id, reason);
+    // FIX: Guardar el documento Warn para obtener su _id
+    const warnDoc = await addWarn(interaction.guildId, target.id, interaction.user.id, reason);
     const warnCount = await getWarnCount(interaction.guildId, target.id);
+    
+    // FIX: Pasar el warnId al modlog para que /modlog muestre la ID usable con /unwarn
+    await addModLog(interaction.guildId, target.id, interaction.user.id, 'warn', reason, null, warnDoc._id.toString());
 
-    // Verificar acciones automáticas
     const autoAction = await checkAutoAction(interaction.guild, target, warnCount);
 
-    // Enviar DM al usuario (si está disponible)
     try {
       const dmEmbed = createEmbed({
         title: `⚠️ Has sido advertido en ${interaction.guild.name}`,
@@ -69,7 +71,6 @@ export default {
       await target.send({ embeds: [dmEmbed] });
     } catch { /* DM cerrado */ }
 
-    // Construir respuesta
     let description = `**Usuario:** ${target}\n**Razón:** ${reason}\n**Warns totales:** ${warnCount}`;
 
     if (autoAction) {

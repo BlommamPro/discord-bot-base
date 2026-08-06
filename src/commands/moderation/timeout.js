@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { parseTime, TIME_LIMITS } from '../../utils/parseTime.js';
+import { addModLog } from '../../utils/modlog.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -55,18 +56,20 @@ export default {
       return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario. Puede que tenga un rol superior al mío.')], flags: MessageFlags.Ephemeral });
     }
 
-    // Parsear tiempo
     const parsed = parseTime(timeInput);
     if (!parsed) {
       return interaction.reply({
-        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h30m`, `7d`, `5m`, `30s`, `2d12h`...')], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h30m`, `7d`, `5m`, `30s`, `2d12h`...')],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
-    // Límite de Discord: 28 días
     if (parsed.ms > TIME_LIMITS.timeout) {
       const maxText = parseTime('28d').text;
       return interaction.reply({
-        embeds: [errorEmbed(`El timeout máximo es **${maxText}** (límite de Discord).`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`El timeout máximo es **${maxText}** (límite de Discord).`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     if (target.communicationDisabledUntilTimestamp && target.communicationDisabledUntilTimestamp > Date.now()) {
@@ -75,12 +78,9 @@ export default {
 
     try {
       await target.timeout(parsed.ms, `${interaction.user.tag}: ${reason}`);
+      await addModLog(interaction.guildId, target.id, interaction.user.id, 'timeout', reason, parsed.text);
 
-      const embed = successEmbed(
-        `**Usuario:** ${target}\n` +
-        `**Duración:** ${parsed.text}\n` +
-        `**Razón:** ${reason}`
-      );
+      const embed = successEmbed(`**Usuario:** ${target}\n**Duración:** ${parsed.text}\n**Razón:** ${reason}`);
       embed.setTitle('🔇 Timeout Aplicado');
 
       await interaction.reply({ embeds: [embed] });

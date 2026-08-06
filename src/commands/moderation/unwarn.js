@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { Warn } from '../../models/Warn.js';
+import { addModLog } from '../../utils/modlog.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -23,7 +24,6 @@ export default {
   async execute(client, interaction, guildData, userData) {
     const warnId = interaction.options.getString('id');
 
-    // Buscar la warn en este servidor
     const warn = await Warn.findOne({
       _id: warnId,
       guildId: interaction.guildId
@@ -31,17 +31,17 @@ export default {
 
     if (!warn) {
       return interaction.reply({
-        embeds: [errorEmbed('No encontré ninguna advertencia con ese ID en este servidor.')], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed('No encontré ninguna advertencia con ese ID en este servidor.')],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
-    // Guardar info para el mensaje de confirmación
     const targetId = warn.userId;
     const reason = warn.reason;
 
-    // Eliminar
     await Warn.findByIdAndDelete(warnId);
+    await addModLog(interaction.guildId, targetId, interaction.user.id, 'unwarn', `Eliminada warn ${warnId}: ${reason}`);
 
-    // Contar warns restantes
     const remaining = await Warn.countDocuments({
       guildId: interaction.guildId,
       userId: targetId

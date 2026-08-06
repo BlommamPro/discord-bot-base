@@ -1,6 +1,6 @@
-// src/commands/moderation/kick.js
-import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
+import { addModLog } from '../../utils/modlog.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -51,11 +51,9 @@ export default {
 
     try {
       await target.kick(`${interaction.user.tag}: ${reason}`);
+      await addModLog(interaction.guildId, target.id, interaction.user.id, 'kick', reason);
 
-      const embed = successEmbed(
-        `**Usuario:** ${target.user.tag} (${target.id})\n` +
-        `**Razón:** ${reason}`
-      );
+      const embed = successEmbed(`**Usuario:** ${target.user.tag} (${target.id})\n**Razón:** ${reason}`);
       embed.setTitle('👢 Usuario Expulsado');
 
       await interaction.reply({ embeds: [embed] });
