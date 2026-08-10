@@ -3,22 +3,32 @@ import { config } from '../../config/config.js';
 import { loadCommandsForDeploy, loadContextMenusForDeploy } from '../handlers/commandHandler.js';
 import { logger } from './logger.js';
 
-const commands = [];
-const contextMenus = [];
-
-const slashCmds = await loadCommandsForDeploy();
-slashCmds.forEach(cmd => commands.push(cmd.CMD.toJSON()));
-
-const ctxMenus = await loadContextMenusForDeploy();
-ctxMenus.forEach(menu => contextMenus.push(menu.CMD.toJSON()));
-
-const allCommands = [...commands, ...contextMenus];
-
-const rest = new REST({ version: '10' }).setToken(config.token);
+// Timeout de seguridad: 5 minutos (Discord a veces tarda mucho con muchos comandos)
+setTimeout(() => {
+  logger.warn('Forzando cierre del deploy por timeout de seguridad (5 min)...');
+  process.exit(0);
+}, 300000);
 
 (async () => {
   try {
-    logger.info(`Deployando ${allCommands.length} comandos...`);
+    const commands = [];
+    const contextMenus = [];
+
+    const slashCmds = await loadCommandsForDeploy();
+    slashCmds.forEach(cmd => commands.push(cmd.CMD.toJSON()));
+
+    const ctxMenus = await loadContextMenusForDeploy();
+    ctxMenus.forEach(menu => contextMenus.push(menu.CMD.toJSON()));
+
+    const allCommands = [...commands, ...contextMenus];
+
+    const rest = new REST({ 
+      version: '10',
+      timeout: 120000,  // 2 minutos por peticion
+      retries: 3
+    }).setToken(config.token);
+
+    logger.info(`Deployando ${allCommands.length} comandos... (puede tardar varios minutos si Discord esta lento)`);
 
     const route = config.guildId
       ? Routes.applicationGuildCommands(config.clientId, config.guildId)
@@ -27,8 +37,10 @@ const rest = new REST({ version: '10' }).setToken(config.token);
     const data = await rest.put(route, { body: allCommands });
 
     logger.success(`✅ ${data.length} comandos deployados correctamente.`);
-    logger.info(`Modo: ${config.guildId ? 'Guild (instantáneo)' : 'Global (hasta 1h)'}`);
+    logger.info(`Modo: ${config.guildId ? 'Guild (instantaneo)' : 'Global (hasta 1h)'}`);
+    process.exit(0);
   } catch (err) {
-    logger.error('Error deployando comandos:', err);
+    logger.error('Error deployando comandos:', err.message || err);
+    process.exit(1);
   }
 })();

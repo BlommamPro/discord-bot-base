@@ -1,4 +1,4 @@
-import { MessageFlags } from 'discord.js';
+import { MessageFlags, EmbedBuilder } from 'discord.js';
 import { config } from '../../../config/config.js';
 import { checkCooldown } from '../../utils/cooldowns.js';
 import { checkPermissions, checkBotPermissions } from '../../utils/permissions.js';
@@ -6,6 +6,43 @@ import { parseCustomId } from '../../utils/parseCustomId.js';
 import { errorEmbed, cooldownEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { getGuildData, getUserData } from '../../utils/guildData.js';
+
+let supportChannel = null;
+
+export function setSupportChannelForErrors(channel) {
+  supportChannel = channel;
+}
+
+async function sendCommandErrorToSupport(interaction, error) {
+  if (!supportChannel) return;
+
+  const stack = error?.stack || 'Sin stack trace';
+  const message = error?.message || String(error);
+  const truncatedStack = stack.length > 1500 ? stack.slice(0, 1500) + '...' : stack;
+
+  const guildName = interaction.guild?.name || 'DM';
+  const guildId = interaction.guildId || 'N/A';
+  const channelName = interaction.channel?.name || 'DM';
+
+  const embed = new EmbedBuilder()
+    .setColor(config.errorColor)
+    .setTitle('⚠️ Error en Comando')
+    .setDescription(`**/${interaction.commandName || interaction.customId}** falló al ejecutarse.`)
+    .addFields(
+      { name: '👤 Usuario', value: `${interaction.user.tag} (\`${interaction.user.id}\`)`, inline: true },
+      { name: '🏘️ Servidor', value: `${guildName} (\`${guildId}\`)`, inline: true },
+      { name: '📋 Canal', value: `<#${interaction.channelId}>`, inline: true },
+      { name: '📝 Error', value: `\`\`\`${message.slice(0, 1000)}\`\`\`` },
+      { name: '📚 Stack Trace', value: `\`\`\`js\n${truncatedStack}\n\`\`\`` }
+    )
+    .setTimestamp();
+
+  try {
+    await supportChannel.send({ embeds: [embed] });
+  } catch (err) {
+    logger.error('No pude enviar error de comando al canal de soporte:', err.message);
+  }
+}
 
 export default {
   name: 'interactionCreate',
@@ -74,17 +111,28 @@ export default {
           guildData = await getGuildData(interaction.guildId);
         }
 
-        // userData es GLOBAL (balance, xp, inventario) — siempre cargar
         userData = await getUserData(interaction.user.id, interaction.user.username);
 
         await command.execute(client, interaction, guildData, userData);
         logger.cmd(`[SLASH] ${interaction.user.tag} → /${command.CMD.name}`);
       } catch (err) {
         logger.error(`Error en /${command.CMD.name}:`, err);
-        const reply = { embeds: [errorEmbed('Ocurrió un error al ejecutar el comando')], flags: MessageFlags.Ephemeral };
-        interaction.replied || interaction.deferred
-          ? interaction.followUp(reply)
-          : interaction.reply(reply);
+
+        // ===== ENVIAR ERROR AL CANAL DE SOPORTE =====
+        await sendCommandErrorToSupport(interaction, err);
+
+        // Responder al usuario
+        const replyPayload = { embeds: [errorEmbed('Ocurrió un error al ejecutar el comando')], flags: MessageFlags.Ephemeral };
+        
+        try {
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp(replyPayload);
+          } else {
+            await interaction.reply(replyPayload);
+          }
+        } catch (replyErr) {
+          logger.error(`No pude responder al error de /${command.CMD.name}:`, replyErr.message);
+        }
       }
     }
 
@@ -107,7 +155,10 @@ export default {
         logger.cmd(`[CTX] ${interaction.user.tag} → ${menu.CMD.name}`);
       } catch (err) {
         logger.error(`Error en context menu ${menu.CMD.name}:`, err);
-        interaction.reply({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], flags: MessageFlags.Ephemeral });
+        await sendCommandErrorToSupport(interaction, err);
+        try {
+          await interaction.reply({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], flags: MessageFlags.Ephemeral });
+        } catch { /* ya respondido */ }
       }
     }
 
@@ -133,10 +184,8 @@ async function handleComponent(client, interaction, type) {
   let handler = null;
   let args = [];
 
-  // Buscar coincidencia exacta primero
   handler = collection.get(interaction.customId);
 
-  // Si no hay coincidencia exacta, buscar por patrón
   if (!handler) {
     for (const [pattern, h] of collection) {
       const parsed = parseCustomId(interaction.customId, pattern);
@@ -150,12 +199,10 @@ async function handleComponent(client, interaction, type) {
 
   if (!handler) return;
 
-  // Owner only
   if (handler.OWNER && !config.ownerIds.includes(interaction.user.id)) {
     return interaction.reply({ embeds: [errorEmbed('Solo los owners pueden usar esto')], flags: MessageFlags.Ephemeral });
   }
 
-  // Permisos
   if (handler.PERMISSIONS?.length && interaction.guild) {
     const permCheck = checkPermissions(interaction.member, handler.PERMISSIONS);
     if (!permCheck.allowed) {
@@ -166,7 +213,6 @@ async function handleComponent(client, interaction, type) {
     }
   }
 
-  // Cooldown
   const { onCooldown, timeLeft } = checkCooldown(
     client,
     handler.customId,
@@ -191,9 +237,14 @@ async function handleComponent(client, interaction, type) {
     logger.cmd(`[${type.toUpperCase()}] ${interaction.user.tag} → ${interaction.customId}`);
   } catch (err) {
     logger.error(`Error en ${type} ${interaction.customId}:`, err);
-    const reply = { embeds: [errorEmbed('Ocurrió un error')], flags: MessageFlags.Ephemeral };
-    interaction.replied || interaction.deferred
-      ? interaction.followUp(reply)
-      : interaction.reply(reply);
+    await sendCommandErrorToSupport(interaction, err);
+    const replyPayload = { embeds: [errorEmbed('Ocurrió un error')], flags: MessageFlags.Ephemeral };
+    try {
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(replyPayload);
+      } else {
+        await interaction.reply(replyPayload);
+      }
+    } catch { /* ya respondido o expirado */ }
   }
 }

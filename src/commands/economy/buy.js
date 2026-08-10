@@ -1,8 +1,9 @@
-import { SlashCommandBuilder , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getShopItem, updateShopItemStock } from '../../utils/shop.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
+import { checkAndAwardBadge } from '../../utils/badges.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -34,7 +35,9 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'buy', 0.08);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Espera un momento antes de comprar de nuevo. <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`Espera un momento antes de comprar de nuevo. <t:${cd.nextTimestamp}:R>.`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const item = await getShopItem(interaction.guildId, itemId);
@@ -46,12 +49,16 @@ export default {
 
     if ((userData?.balance || 0) < totalPrice) {
       return interaction.reply({
-        embeds: [errorEmbed(`No tienes suficientes coins. Necesitas **${totalPrice} coins** y tienes **${userData.balance}**.`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`No tienes suficientes coins. Necesitas **${totalPrice} coins** y tienes **${userData.balance}**.`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     if (item.stock >= 0 && item.stock < quantity) {
       return interaction.reply({
-        embeds: [errorEmbed(`No hay suficiente stock. Quedan **${item.stock}** unidades.`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`No hay suficiente stock. Quedan **${item.stock}** unidades.`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     if (item.roleId) {
@@ -65,7 +72,6 @@ export default {
         return interaction.reply({ embeds: [errorEmbed('No tengo permisos para darte ese rol.')], flags: MessageFlags.Ephemeral });
       }
 
-      // FIX: Usar try/catch real en lugar de .catch() con return
       try {
         await interaction.member.roles.add(role);
       } catch {
@@ -73,7 +79,7 @@ export default {
       }
     }
 
-    await updateUserData(interaction.user.id, { $inc: { balance: -totalPrice } });
+    await updateUserData(interaction.user.id, { $inc: { balance: -totalPrice, totalPurchases: quantity } });
 
     const inventoryItem = {
       itemId: item.itemId,
@@ -99,10 +105,13 @@ export default {
 
     await setDbCooldown(interaction.user.id, 'buy');
 
+    // ===== BADGE =====
+    const newTotal = (userData.totalPurchases || 0) + quantity;
+    if (newTotal >= 10) await checkAndAwardBadge(interaction.user.id, 'shopaholic', client);
+
     const embed = successEmbed(
       `Compraste **${quantity}x ${item.name}** por **${totalPrice} coins**!` +
-      (item.roleId ? `
-🎁 Se te ha otorgado el rol <@&${item.roleId}>` : '')
+      (item.roleId ? `\n🎁 Se te ha otorgado el rol <@&${item.roleId}>` : '')
     );
     embed.setTitle('🛒 Compra Exitosa');
 

@@ -1,7 +1,8 @@
-import { SlashCommandBuilder , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
+import { checkAndAwardBadge, checkRichBadge } from '../../utils/badges.js';
 
 const DAILY_REWARD = 100;
 const STREAK_BONUS = 50;
@@ -22,13 +23,15 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'daily', 24 * 60);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Ya reclamaste tu daily. Vuelve <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`Ya reclamaste tu daily. Vuelve <t:${cd.nextTimestamp}:R>.`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const nowMs = Date.now();
     let newStreak = 1;
+    const isFirstDaily = !userData.lastDaily && !userData.cooldowns?.daily;
 
-    // Usar lastDaily o cooldowns.daily para calcular racha
     const lastDailyRaw = userData.lastDaily || userData.cooldowns?.daily;
     if (lastDailyRaw) {
       const lastMs = new Date(lastDailyRaw).getTime();
@@ -49,9 +52,11 @@ export default {
     });
     await setDbCooldown(interaction.user.id, 'daily');
 
-    // Calcular próximo daily correctamente
-    const nextMs = nowMs + 24 * 60 * 60 * 1000;
-    const nextTimestamp = Math.floor(nextMs / 1000);
+    // ===== BADGES =====
+    if (isFirstDaily) await checkAndAwardBadge(interaction.user.id, 'early_bird', client);
+    if (newStreak === 7) await checkAndAwardBadge(interaction.user.id, 'streak_7', client);
+    if (newStreak === 30) await checkAndAwardBadge(interaction.user.id, 'streak_30', client);
+    await checkRichBadge(interaction.user.id, client);
 
     const embed = successEmbed(
       `Reclamaste **${totalReward} coins**!` +

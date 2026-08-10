@@ -1,16 +1,12 @@
-// src/events/guild/messageCreate.js
 import { getGuildData, getUserData, updateUserData } from '../../utils/guildData.js';
 import { addGuildXp, getLevelConfig, getXpForLevel } from '../../utils/levelSystem.js';
 import { checkAndAwardBadge } from '../../utils/badges.js';
 import { logger } from '../../utils/logger.js';
 
-// XP global
 const MIN_XP = 15;
 const MAX_XP = 25;
 
-// Cooldown anti-spam global
 const globalXpCooldowns = new Map();
-// Cooldown anti-spam por servidor
 const guildXpCooldowns = new Map();
 
 function getXpForGlobalLevel(level) {
@@ -44,7 +40,6 @@ export default {
         leveledUp = true;
       }
 
-      // FIX: Usar $set para campos planos y $inc para messages en el mismo update
       await updateUserData(userId, {
         $set: {
           username: message.author.username,
@@ -54,9 +49,9 @@ export default {
         $inc: { messages: 1 }
       });
 
-      // Badges globales
-      if (newLevel >= 10) await checkAndAwardBadge(userId, 'level_10');
-      if (newLevel >= 50) await checkAndAwardBadge(userId, 'level_50');
+      // ===== BADGES (con client para DM) =====
+      if (newLevel >= 10) await checkAndAwardBadge(userId, 'level_10', client);
+      if (newLevel >= 50) await checkAndAwardBadge(userId, 'level_50', client);
 
       if (leveledUp) {
         logger.success(`${message.author.tag} subió al nivel global ${newLevel}!`);

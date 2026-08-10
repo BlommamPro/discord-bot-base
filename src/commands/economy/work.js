@@ -1,7 +1,8 @@
-import { SlashCommandBuilder , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
+import { checkRichBadge } from '../../utils/badges.js';
 
 const MIN_REWARD = 30;
 const MAX_REWARD = 80;
@@ -35,7 +36,9 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'work', 30);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Ya trabajaste recientemente. Vuelve <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`Ya trabajaste recientemente. Vuelve <t:${cd.nextTimestamp}:R>.`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const reward = Math.floor(Math.random() * (MAX_REWARD - MIN_REWARD + 1)) + MIN_REWARD;
@@ -43,6 +46,9 @@ export default {
 
     await updateUserData(interaction.user.id, { $inc: { balance: reward } });
     await setDbCooldown(interaction.user.id, 'work');
+
+    // ===== BADGE =====
+    await checkRichBadge(interaction.user.id, client);
 
     const embed = successEmbed(`Trabajaste como **${job}** y ganaste **${reward} coins**!`);
     embed.setTitle('💼 Trabajo Completado');

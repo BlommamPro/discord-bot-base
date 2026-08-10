@@ -5,6 +5,7 @@ import { loadCommands } from "./handlers/commandHandler.js";
 import { loadComponents } from "./handlers/componentHandler.js";
 import { connectDB } from "./utils/database.js";
 import { logger } from "./utils/logger.js";
+import { setupProcessHandlers } from "./utils/anticrash.js";
 
 const client = new Client({
   intents: [
@@ -34,6 +35,9 @@ client.buttons = new Collection();
 client.selectMenus = new Collection();
 client.modals = new Collection();
 client.cooldowns = new Collection();
+
+// ===== ANTICRASH =====
+setupProcessHandlers(client);
 
 // ===== CONECTAR DB =====
 if (config.mongoURL) {

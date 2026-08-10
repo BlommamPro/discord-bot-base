@@ -1,7 +1,8 @@
-import { SlashCommandBuilder , MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
+import { checkAndAwardBadge, checkRichBadge } from '../../utils/badges.js';
 
 const CRIMES = [
   { name: 'robaste un banco', min: 100, max: 300 },
@@ -34,7 +35,9 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'crime', 60);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`La policía te vigila. Vuelve a intentarlo <t:${cd.nextTimestamp}:R>.`)], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed(`La policía te vigila. Vuelve a intentarlo <t:${cd.nextTimestamp}:R>.`)],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const success = Math.random() < 0.55;
@@ -43,8 +46,15 @@ export default {
       const crime = CRIMES[Math.floor(Math.random() * CRIMES.length)];
       const reward = Math.floor(Math.random() * (crime.max - crime.min + 1)) + crime.min;
 
-      await updateUserData(interaction.user.id, { $inc: { balance: reward } });
+      await updateUserData(interaction.user.id, {
+        $inc: { balance: reward, crimes: 1 }
+      });
       await setDbCooldown(interaction.user.id, 'crime');
+
+      // ===== BADGES =====
+      const newCrimes = (userData.crimes || 0) + 1;
+      if (newCrimes >= 50) await checkAndAwardBadge(interaction.user.id, 'crime_lord', client);
+      await checkRichBadge(interaction.user.id, client);
 
       const embed = successEmbed(`**${crime.name}** y ganaste **${reward} coins**!`);
       embed.setTitle('🦹 Crimen Exitoso');

@@ -9,6 +9,8 @@ const UserSchema = new mongoose.Schema({
   xp: { type: Number, default: 0 },
   level: { type: Number, default: 1 },
   messages: { type: Number, default: 0 },
+  crimes: { type: Number, default: 0 },              // ← NUEVO: crímenes exitosos
+  totalPurchases: { type: Number, default: 0 },      // ← NUEVO: total de compras
   inventory: [{
     itemId: String,
     name: String,

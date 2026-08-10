@@ -13,7 +13,7 @@ export const BADGE_DEFINITIONS = {
   married: { emoji: '💍', name: 'Casado', desc: 'Usar /marry' }
 };
 
-export async function checkAndAwardBadge(userId, badgeId) {
+export async function checkAndAwardBadge(userId, badgeId, client = null) {
   const user = await User.findOne({ userId });
   if (!user || user.badges.includes(badgeId)) return false;
 
@@ -21,7 +21,29 @@ export async function checkAndAwardBadge(userId, badgeId) {
     { userId },
     { $push: { badges: badgeId } }
   );
+
+  // Notificar por DM si hay client
+  if (client) {
+    const badge = BADGE_DEFINITIONS[badgeId];
+    if (badge) {
+      try {
+        const discordUser = await client.users.fetch(userId);
+        await discordUser.send({
+          content: `${badge.emoji} **¡Nueva insignia desbloqueada: ${badge.name}!**\n*${badge.desc}*`
+        });
+      } catch { /* DM cerrado, ignorar */ }
+    }
+  }
+
   return true;
+}
+
+export async function checkRichBadge(userId, client = null) {
+  const user = await User.findOne({ userId });
+  if (user && user.balance >= 10000) {
+    return await checkAndAwardBadge(userId, 'rich', client);
+  }
+  return false;
 }
 
 export function getBadgeDisplay(badgeId) {
