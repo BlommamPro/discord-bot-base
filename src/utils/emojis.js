@@ -5,14 +5,16 @@
 
 export const emojis = {
   // Emojis animados
-  animate_on: '<a:discordon:1017992953140105316>',
-  animate_off: '<a:discordoff:1017992958177443850>',
+  a_on: '<a:discordon:1017992953140105316>',
+  a_off: '<a:discordoff:1017992958177443850>',
   loading: '<a:loading:1017992953140105318>',
   
   // Emojis estáticos
   check: '<:check:1017992953140105319>',
   cross: '<:cross:1017992953140105320>',
   warning: '<:warning:1017992953140105321>',
+  on: '<:activ:1017992963374202971>',
+  off: '<:disactiv:1017992954297712662>',
   
   // Emojis de economía
   coin: '<:coin:1017992953140105322>',

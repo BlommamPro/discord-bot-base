@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { createShopItem, deleteShopItem, getShopItems } from '../../utils/shop.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()

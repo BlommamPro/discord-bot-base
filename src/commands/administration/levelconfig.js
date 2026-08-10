@@ -60,7 +60,7 @@ export default {
         { upsert: true, new: true }
       );
       return interaction.reply({ 
-        embeds: [successEmbed(`Sistema de niveles: ${enable ? `${emojis.animate_on} Activado` : `${emojis.animate_off} Desactivado`}`)] 
+        embeds: [successEmbed(`Sistema de niveles: ${enable ? `${emojis.a_on} Activado` : `${emojis.a_off} Desactivado`}`)] 
       });
     }
 
@@ -133,7 +133,7 @@ export default {
       const embed = createEmbed({
         title: '⚙️ Config de Niveles',
         fields: [
-          { name: 'Estado', value: config?.enabled ? '✅ Activado' : '❌ Desactivado', inline: true },
+          { name: 'Estado', value: config?.enabled ? `${emojis.on} Activado` : `${emojis.off} Desactivado`, inline: true },
           { name: 'Canal', value: config?.announceChannel ? `<#${config.announceChannel}>` : 'No configurado', inline: true },
           { name: 'Roles por nivel', value: rolesText || 'Ninguno' }
         ]

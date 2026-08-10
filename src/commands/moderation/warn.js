@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
-import { addWarn, getWarnCount, checkAutoAction } from '../../utils/warns.js';
+import { addWarn, getWarnCount, checkAutoAction, getWarnConfig } from '../../utils/warns.js';
 import { addModLog } from '../../utils/modlog.js';
 
 export default {
@@ -50,26 +50,27 @@ export default {
       return interaction.reply({ embeds: [errorEmbed('No puedo moderar a ese usuario.')], flags: MessageFlags.Ephemeral });
     }
 
-    // FIX: Guardar el documento Warn para obtener su _id
     const warnDoc = await addWarn(interaction.guildId, target.id, interaction.user.id, reason);
     const warnCount = await getWarnCount(interaction.guildId, target.id);
-    
-    // FIX: Pasar el warnId al modlog para que /modlog muestre la ID usable con /unwarn
     await addModLog(interaction.guildId, target.id, interaction.user.id, 'warn', reason, null, warnDoc._id.toString());
 
     const autoAction = await checkAutoAction(interaction.guild, target, warnCount);
 
-    try {
-      const dmEmbed = createEmbed({
-        title: `⚠️ Has sido advertido en ${interaction.guild.name}`,
-        description: [
-          `**Razón:** ${reason}`,
-          `**Moderador:** ${interaction.user.tag}`,
-          `**Warns totales:** ${warnCount}`
-        ].join('\n')
-      });
-      await target.send({ embeds: [dmEmbed] });
-    } catch { /* DM cerrado */ }
+    // ===== FIX: Verificar configuracion de DM antes de enviar =====
+    const warnConfig = await getWarnConfig(interaction.guildId);
+    if (warnConfig.dmUser) {
+      try {
+        const dmEmbed = createEmbed({
+          title: `⚠️ Has sido advertido en ${interaction.guild.name}`,
+          description: [
+            `**Razón:** ${reason}`,
+            `**Moderador:** ${interaction.user.tag}`,
+            `**Warns totales:** ${warnCount}`
+          ].join('\n')
+        });
+        await target.send({ embeds: [dmEmbed] });
+      } catch { /* DM cerrado */ }
+    }
 
     let description = `**Usuario:** ${target}\n**Razón:** ${reason}\n**Warns totales:** ${warnCount}`;
 

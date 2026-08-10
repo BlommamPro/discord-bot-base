@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { getWarnConfig, updateWarnConfig } from '../../utils/warns.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -38,7 +39,7 @@ export default {
               .setDescription('Duración del timeout en minutos (solo para timeout)')
               .setRequired(false)
               .setMinValue(1)
-              .setMaxValue(40320) // 28 días máximo
+              .setMaxValue(40320)
          )
     )
     .addSubcommand(sub =>
@@ -99,7 +100,6 @@ export default {
 
       const config = await getWarnConfig(interaction.guildId);
 
-      // Reemplazar si ya existe para esa cantidad
       const existingIndex = config.actions.findIndex(a => a.warns === warns);
       const newAction = { warns, action, duration: action === 'timeout' ? duration : 0 };
 
@@ -109,7 +109,6 @@ export default {
         config.actions.push(newAction);
       }
 
-      // Ordenar por cantidad de warns
       config.actions.sort((a, b) => a.warns - b.warns);
 
       await updateWarnConfig(interaction.guildId, { actions: config.actions });
@@ -138,7 +137,7 @@ export default {
     if (sub === 'dm') {
       const enable = interaction.options.getBoolean('activar');
       await updateWarnConfig(interaction.guildId, { dmUser: enable });
-      return interaction.reply({ embeds: [successEmbed(`DM al usuario warnado: ${enable ? '✅ Activado' : '❌ Desactivado'}`)] });
+      return interaction.reply({ embeds: [successEmbed(`DM al usuario warnado: ${enable ? `${emojis.a_on} Activado` : `${emojis.a_off} Desactivado`}`)] });
     }
   }
 };
