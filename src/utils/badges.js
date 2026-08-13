@@ -22,7 +22,6 @@ export async function checkAndAwardBadge(userId, badgeId, client = null) {
     { $push: { badges: badgeId } }
   );
 
-  // Notificar por DM si hay client
   if (client) {
     const badge = BADGE_DEFINITIONS[badgeId];
     if (badge) {
@@ -40,7 +39,9 @@ export async function checkAndAwardBadge(userId, badgeId, client = null) {
 
 export async function checkRichBadge(userId, client = null) {
   const user = await User.findOne({ userId });
-  if (user && user.balance >= 10000) {
+  // FIX: sumar balance (mano) + bank (banco) para el badge de millonario
+  const totalWealth = (user?.balance || 0) + (user?.bank || 0);
+  if (user && totalWealth >= 10000) {
     return await checkAndAwardBadge(userId, 'rich', client);
   }
   return false;

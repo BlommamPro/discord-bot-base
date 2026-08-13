@@ -3,14 +3,15 @@ import mongoose from 'mongoose';
 const UserSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
   username: { type: String, default: '' },
-  balance: { type: Number, default: 0 },
+  balance: { type: Number, default: 500 },
+  bank: { type: Number, default: 0 },
   dailyStreak: { type: Number, default: 0 },
   lastDaily: { type: Date, default: null },
   xp: { type: Number, default: 0 },
   level: { type: Number, default: 1 },
   messages: { type: Number, default: 0 },
-  crimes: { type: Number, default: 0 },              // ← NUEVO: crímenes exitosos
-  totalPurchases: { type: Number, default: 0 },      // ← NUEVO: total de compras
+  crimes: { type: Number, default: 0 },
+  totalPurchases: { type: Number, default: 0 },
   inventory: [{
     itemId: String,
     name: String,

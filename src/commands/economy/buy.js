@@ -4,6 +4,7 @@ import { getShopItem, updateShopItemStock } from '../../utils/shop.js';
 import { updateUserData } from '../../utils/guildData.js';
 import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
 import { checkAndAwardBadge } from '../../utils/badges.js';
+import { User } from '../../models/User.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -79,8 +80,6 @@ export default {
       }
     }
 
-    await updateUserData(interaction.user.id, { $inc: { balance: -totalPrice, totalPurchases: quantity } });
-
     const inventoryItem = {
       itemId: item.itemId,
       name: item.name,
@@ -88,13 +87,22 @@ export default {
       boughtAt: new Date()
     };
 
-    const existingIndex = userData.inventory?.findIndex(i => i.itemId === item.itemId);
-    if (existingIndex >= 0) {
+    // FIX: operacion atomica para evitar race conditions en inventario
+    const updatedExisting = await User.findOneAndUpdate(
+      { userId: interaction.user.id, 'inventory.itemId': item.itemId },
+      {
+        $inc: {
+          balance: -totalPrice,
+          totalPurchases: quantity,
+          'inventory.$.quantity': quantity
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedExisting) {
       await updateUserData(interaction.user.id, {
-        $inc: { [`inventory.${existingIndex}.quantity`]: quantity }
-      });
-    } else {
-      await updateUserData(interaction.user.id, {
+        $inc: { balance: -totalPrice, totalPurchases: quantity },
         $push: { inventory: inventoryItem }
       });
     }
@@ -105,7 +113,6 @@ export default {
 
     await setDbCooldown(interaction.user.id, 'buy');
 
-    // ===== BADGE =====
     const newTotal = (userData.totalPurchases || 0) + quantity;
     if (newTotal >= 10) await checkAndAwardBadge(interaction.user.id, 'shopaholic', client);
 

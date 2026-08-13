@@ -49,7 +49,6 @@ export default {
         $inc: { messages: 1 }
       });
 
-      // ===== BADGES (con client para DM) =====
       if (newLevel >= 10) await checkAndAwardBadge(userId, 'level_10', client);
       if (newLevel >= 50) await checkAndAwardBadge(userId, 'level_50', client);
 
@@ -88,7 +87,7 @@ export default {
           if (levelConfig.announceChannel) {
             const channel = message.guild.channels.cache.get(levelConfig.announceChannel);
             if (channel?.isTextBased()) {
-              channel.send(`🎉 ¡<@${userId}> ha subido al nivel **${result.newLevel}** en este servidor!`)
+              await channel.send(`🎉 ¡<@${userId}> ha subido al nivel **${result.newLevel}**!`)
                 .catch(() => {});
             }
           }

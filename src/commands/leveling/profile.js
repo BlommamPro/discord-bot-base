@@ -30,20 +30,24 @@ export default {
     const target = interaction.options.getUser('usuario') || interaction.user;
     const data = await getUserData(target.id, target.username);
 
-    // Nivel del servidor
     const guildLevelData = await getGuildLevel(interaction.guildId, target.id);
     const guildXpNeeded = getXpForLevel(guildLevelData.level);
     const guildProgress = Math.round((guildLevelData.xp / guildXpNeeded) * 100);
 
-    // Nivel global
     const globalXpNeeded = getGlobalXpForLevel(data.level);
     const globalProgress = Math.round((data.xp / globalXpNeeded) * 100);
+
+    const wallet = data?.balance || 0;
+    const bank = data?.bank || 0;
+    const total = wallet + bank;
 
     const embed = createEmbed({
       title: `👤 Perfil de ${target.username}`,
       thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }),
       fields: [
-        { name: '💰 Dinero', value: `\`${data.balance} coins\``, inline: true },
+        { name: '💰 En Mano', value: `\`${wallet} coins\``, inline: true },
+        { name: '🏦 Banco', value: `\`${bank} coins\``, inline: true },
+        { name: '📊 Total', value: `\`${total} coins\``, inline: true },
         { name: '🏠 Nivel Servidor', value: `\`${guildLevelData.level}\` (${guildProgress}%)`, inline: true },
         { name: '🌍 Nivel Global', value: `\`${data.level}\` (${globalProgress}%)`, inline: true },
         { name: '✨ XP Servidor', value: `\`${guildLevelData.xp}/${guildXpNeeded}\``, inline: true },

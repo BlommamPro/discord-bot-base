@@ -1,4 +1,3 @@
-// src/commands/moderation/clear.js
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType , MessageFlags} from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 
@@ -38,12 +37,10 @@ export default {
     const targetUser = interaction.options.getUser('usuario');
     const targetChannel = interaction.options.getChannel('canal') || interaction.channel;
 
-    // Verificar que sea un canal de texto
     if (!targetChannel.isTextBased()) {
       return interaction.reply({ embeds: [errorEmbed('Solo puedo borrar mensajes en canales de texto.')], flags: MessageFlags.Ephemeral });
     }
 
-    // Verificar permisos del bot en ese canal
     const botMember = interaction.guild.members.me;
     const botPerms = targetChannel.permissionsFor(botMember);
     if (!botPerms.has('ManageMessages')) {
@@ -56,22 +53,26 @@ export default {
       let deletedCount = 0;
 
       if (targetUser) {
-        // Borrar mensajes de un usuario específico
         const messages = await targetChannel.messages.fetch({ limit: 100 });
-        const userMessages = messages.filter(m => m.author.id === targetUser.id).first(amount);
+        const userMessages = Array.from(
+          messages.filter(m => m.author.id === targetUser.id).values()
+        ).slice(0, amount);
 
         if (userMessages.length === 0) {
           return interaction.editReply({ embeds: [errorEmbed(`No encontré mensajes recientes de ${targetUser} en ${targetChannel}.`)] });
         }
 
-        // bulkDelete no funciona bien con filtrado, así que borramos uno por uno
-        for (const msg of userMessages) {
-          await msg.delete().catch(() => {});
-          deletedCount++;
+        try {
+          const deleted = await targetChannel.bulkDelete(userMessages, true);
+          deletedCount = deleted.size;
+        } catch {
+          for (const msg of userMessages) {
+            await msg.delete().catch(() => {});
+            deletedCount++;
+          }
         }
       } else {
-        // Borrar mensajes en general
-        const deleted = await targetChannel.bulkDelete(amount, true); // true = filtra mensajes >14 días
+        const deleted = await targetChannel.bulkDelete(amount, true);
         deletedCount = deleted.size;
       }
 

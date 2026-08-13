@@ -65,12 +65,18 @@ export default {
     }
 
     if (type === 'coins') {
-      const top = await User.find().sort({ balance: -1 }).limit(10);
+      // FIX: sort por balance + bank (riqueza total)
+      const top = await User.aggregate([
+        { $addFields: { totalWealth: { $add: ['$balance', '$bank'] } } },
+        { $sort: { totalWealth: -1 } },
+        { $limit: 10 }
+      ]);
 
       const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-      const description = top.map((u, i) =>
-        `${medals[i] || '🔹'} <@${u.userId}> — **${u.balance} coins**`
-      ).join('\n');
+      const description = top.map((u, i) => {
+        const total = (u.balance || 0) + (u.bank || 0);
+        return `${medals[i] || '🔹'} <@${u.userId}> — **${total} coins**`;
+      }).join('\n');
 
       const embed = createEmbed({
         title: '🏆 Top Más Ricos',

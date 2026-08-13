@@ -22,7 +22,6 @@ async function sendCommandErrorToSupport(interaction, error) {
 
   const guildName = interaction.guild?.name || 'DM';
   const guildId = interaction.guildId || 'N/A';
-  const channelName = interaction.channel?.name || 'DM';
 
   const embed = new EmbedBuilder()
     .setColor(config.errorColor)
@@ -49,27 +48,22 @@ export default {
   once: false,
 
   async execute(client, interaction) {
-    // ===== SLASH COMMANDS =====
     if (interaction.isChatInputCommand()) {
       const command = client.slashCommands.get(interaction.commandName);
       if (!command) return;
 
-      // Owner only
       if (command.OWNER && !config.ownerIds.includes(interaction.user.id)) {
         return interaction.reply({ embeds: [errorEmbed('Solo los owners pueden usar este comando')], flags: MessageFlags.Ephemeral });
       }
 
-      // Guild only
       if (command.GUILD_ONLY && !interaction.guild) {
         return interaction.reply({ embeds: [errorEmbed('Este comando solo se puede usar en servidores')], flags: MessageFlags.Ephemeral });
       }
 
-      // NSFW
       if (command.NSFW && !interaction.channel.nsfw) {
         return interaction.reply({ embeds: [errorEmbed('Este comando solo se puede usar en canales NSFW')], flags: MessageFlags.Ephemeral });
       }
 
-      // Permisos de usuario
       if (command.PERMISSIONS?.length && interaction.guild) {
         const permCheck = checkPermissions(interaction.member, command.PERMISSIONS);
         if (!permCheck.allowed) {
@@ -80,7 +74,6 @@ export default {
         }
       }
 
-      // Permisos del bot
       if (command.BOT_PERMISSIONS?.length && interaction.guild) {
         const botPermCheck = checkBotPermissions(interaction.guild.members.me, command.BOT_PERMISSIONS);
         if (!botPermCheck.allowed) {
@@ -91,7 +84,6 @@ export default {
         }
       }
 
-      // Cooldown
       const { onCooldown, timeLeft } = checkCooldown(
         client,
         command.CMD.name,
@@ -102,7 +94,6 @@ export default {
         return interaction.reply({ embeds: [cooldownEmbed(timeLeft)], flags: MessageFlags.Ephemeral });
       }
 
-      // Ejecutar con datos de guild y usuario desde MongoDB
       try {
         let guildData = null;
         let userData = null;
@@ -117,11 +108,8 @@ export default {
         logger.cmd(`[SLASH] ${interaction.user.tag} → /${command.CMD.name}`);
       } catch (err) {
         logger.error(`Error en /${command.CMD.name}:`, err);
-
-        // ===== ENVIAR ERROR AL CANAL DE SOPORTE =====
         await sendCommandErrorToSupport(interaction, err);
 
-        // Responder al usuario
         const replyPayload = { embeds: [errorEmbed('Ocurrió un error al ejecutar el comando')], flags: MessageFlags.Ephemeral };
         
         try {
@@ -136,7 +124,6 @@ export default {
       }
     }
 
-    // ===== CONTEXT MENUS =====
     else if (interaction.isContextMenuCommand()) {
       const menu = client.contextMenus.get(interaction.commandName);
       if (!menu) return;
@@ -156,23 +143,25 @@ export default {
       } catch (err) {
         logger.error(`Error en context menu ${menu.CMD.name}:`, err);
         await sendCommandErrorToSupport(interaction, err);
+        // FIX: verificar replied/deferred antes de responder
         try {
-          await interaction.reply({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], flags: MessageFlags.Ephemeral });
-        } catch { /* ya respondido */ }
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], flags: MessageFlags.Ephemeral });
+          } else {
+            await interaction.reply({ embeds: [errorEmbed('Error al ejecutar el menú contextual')], flags: MessageFlags.Ephemeral });
+          }
+        } catch { /* ya respondido o expirado */ }
       }
     }
 
-    // ===== BUTTONS =====
     else if (interaction.isButton()) {
       await handleComponent(client, interaction, 'buttons');
     }
 
-    // ===== SELECT MENUS =====
     else if (interaction.isAnySelectMenu()) {
       await handleComponent(client, interaction, 'selectMenus');
     }
 
-    // ===== MODALS =====
     else if (interaction.isModalSubmit()) {
       await handleComponent(client, interaction, 'modals');
     }
