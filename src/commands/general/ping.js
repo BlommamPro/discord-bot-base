@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -15,7 +16,7 @@ export default {
   NSFW: false,
 
   async execute(client, interaction, guildData, userData) {
-    await interaction.reply({ content: '🏓 Calculando...' });
+    await interaction.reply({ content: `${emojis.pingconnetion} Calculando ${emojis.load}` });
     
     // fetchReply() como método SÍ funciona y no está obsoleto
     const sent = await interaction.fetchReply();

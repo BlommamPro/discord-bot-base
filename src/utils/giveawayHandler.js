@@ -8,10 +8,9 @@ export async function getActiveGiveaways() {
   return await Giveaway.find({ ended: false, endTime: { $gt: new Date() } });
 }
 
-// ===== FIX: acepta guildId opcional para filtrar por servidor =====
 export async function endGiveaway(client, giveawayId, guildId = null) {
   const query = { giveawayId, ended: false };
-  if (guildId) query.guildId = guildId;  // ← filtro por servidor
+  if (guildId) query.guildId = guildId;
 
   const gw = await Giveaway.findOne(query);
   if (!gw) return null;
@@ -54,14 +53,22 @@ export async function endGiveaway(client, giveawayId, guildId = null) {
     ? winners.map(id => `<@${id}>`).join(', ')
     : 'Nadie participó';
 
+  // FIX: mostrar rol requerido en embed final
+  const finalLines = [
+    `**Premio:** ${gw.prize}`,
+    `**Ganador(es):** ${winnerText}`,
+    `**Participantes:** ${allParticipants.length}`,
+  ];
+
+  if (gw.requiredRoleId) {
+    finalLines.push(`**Requisito:** <@&${gw.requiredRoleId}>`);
+  }
+
+  finalLines.push(`**ID:** \`${gw.giveawayId}\``);
+
   const embed = createEmbed({
     title: '🎉 Sorteo Finalizado',
-    description: [
-      `**Premio:** ${gw.prize}`,
-      `**Ganador(es):** ${winnerText}`,
-      `**Participantes:** ${allParticipants.length}`,
-      `**ID:** \`${gw.giveawayId}\``
-    ].join('\n'),
+    description: finalLines.join('\n'),
     footer: { text: `Finalizado • ID: ${gw.giveawayId}` }
   });
 
@@ -77,10 +84,9 @@ export async function endGiveaway(client, giveawayId, guildId = null) {
   return gw;
 }
 
-// ===== FIX: acepta guildId opcional =====
 export async function rerollGiveaway(giveawayId, guildId = null) {
   const query = { giveawayId, ended: true };
-  if (guildId) query.guildId = guildId;  // ← filtro por servidor
+  if (guildId) query.guildId = guildId;
 
   const gw = await Giveaway.findOne(query);
   if (!gw || gw.participants.length === 0) return null;
@@ -112,16 +118,23 @@ export async function updateGiveawayEmbed(message, giveawayId) {
   const timeLeft = Math.ceil((gw.endTime - now) / 1000);
   if (timeLeft <= 0) return;
 
+  // FIX: mostrar rol requerido en embed de actualización
+  const descriptionLines = [
+    `**Premio:** ${gw.prize}`,
+    `**Ganadores:** ${gw.winnerCount}`,
+    `**Termina:** <t:${Math.floor(gw.endTime / 1000)}:R>`,
+    `**Participantes:** ${gw.participants.length}`,
+  ];
+
+  if (gw.requiredRoleId) {
+    descriptionLines.push(`**Requisito:** <@&${gw.requiredRoleId}>`);
+  }
+
+  descriptionLines.push('', 'Reacciona con 🎉 para participar');
+
   const embed = createEmbed({
     title: '🎉 Sorteo',
-    description: [
-      `**Premio:** ${gw.prize}`,
-      `**Ganadores:** ${gw.winnerCount}`,
-      `**Termina:** <t:${Math.floor(gw.endTime / 1000)}:R>`,
-      `**Participantes:** ${gw.participants.length}`,
-      ``,
-      `Reacciona con 🎉 para participar`
-    ].join('\n'),
+    description: descriptionLines.join('\n'),
     footer: { text: `ID: ${gw.giveawayId} • Creado por ${gw.hostedBy}` }
   });
 
@@ -141,7 +154,7 @@ export function startGiveawayChecker(client) {
 
     for (const gw of ending) {
       try {
-        await endGiveaway(client, gw.giveawayId);  // sin guildId, el checker sigue funcionando
+        await endGiveaway(client, gw.giveawayId);
       } catch (err) {
         logger.error('Error finalizando giveaway', gw.giveawayId, err.message);
       }

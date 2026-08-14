@@ -7,32 +7,24 @@ export const emojis = {
   // Emojis animados
   a_on: '<a:discordon:1017992953140105316>',
   a_off: '<a:discordoff:1017992958177443850>',
-  loading: '<a:loading:1017992953140105318>',
+  load: '<a:loadinge:1537944714291191829>',
+  pingconnetion: '<a:connexionping:1537953051514634382>',
   
   // Emojis estáticos
-  check: '<:check:1017992953140105319>',
-  cross: '<:cross:1017992953140105320>',
-  warning: '<:warning:1017992953140105321>',
+  check: '<:check:1537882869203210270>',
+  cross: '<:croix:1537881873106079805>',
+  warning: '<:warningicon:1017992956407468083>',
   on: '<:activ:1017992963374202971>',
   off: '<:disactiv:1017992954297712662>',
+  infor: '<:info:1537883147696611448>',
   
   // Emojis de economía
-  coin: '<:coin:1017992953140105322>',
-  bank: '<:bank:1017992953140105323>',
+  coin: '<:coin:1537886245240176720>',
+  bank: '<:bank:1537948797781409823>',
   
   // Emojis de moderación
-  ban: '<:ban:1017992953140105324>',
-  kick: '<:kick:1017992953140105325>',
-  mute: '<:mute:1017992953140105326>',
-  
-  // Emojis de niveles
-  trophy: '<:trophy:1017992953140105327>',
-  star: '<:star:1017992953140105328>',
-  
-  // Si quieres emojis normales como fallback
-  arrow_right: '➡️',
-  arrow_left: '⬅️',
-  fire: '🔥'
+  ban: '<:cybersecurite:1537882166183198821>',
+  mute: '<:mute:1537881450131755109>'
 };
 
 // Helper para usar emojis fácilmente

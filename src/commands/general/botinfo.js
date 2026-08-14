@@ -4,6 +4,7 @@ import { config } from '../../../config/config.js';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { emojis } from '../../utils/emojis.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -58,7 +59,7 @@ export default {
     const nodeVersion = process.version;
 
     const embed = createEmbed({
-      title: `🤖 ${client.user.username}`,
+      title: `${emojis.infor} ${client.user.username}`,
       thumbnail: client.user.displayAvatarURL({ dynamic: true, size: 256 }),
       description: `**${client.user.username}** es un bot multifuncional con economia, niveles, moderacion, sorteos y mas.`,
       fields: [

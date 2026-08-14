@@ -57,16 +57,23 @@ export default {
     const endTime = Date.now() + parsed.ms;
     const giveawayId = generateGiveawayId();
 
+    // FIX: mostrar rol requerido en el embed
+    const descriptionLines = [
+      `**Premio:** ${prize}`,
+      `**Ganadores:** ${winnerCount}`,
+      `**Termina:** <t:${Math.floor(endTime / 1000)}:R>`,
+      `**Participantes:** 0`,
+    ];
+
+    if (requiredRole) {
+      descriptionLines.push(`**Requisito:** Tener el rol <@&${requiredRole.id}>`);
+    }
+
+    descriptionLines.push('', 'Reacciona con 🎉 para participar');
+
     const embed = createEmbed({
       title: '🎉 Nuevo Sorteo',
-      description: [
-        `**Premio:** ${prize}`,
-        `**Ganadores:** ${winnerCount}`,
-        `**Termina:** <t:${Math.floor(endTime / 1000)}:R>`,
-        `**Participantes:** 0`,
-        ``,
-        `Reacciona con 🎉 para participar`
-      ].join('\n'),
+      description: descriptionLines.join('\n'),
       footer: { text: `ID: ${giveawayId} • Creado por ${interaction.user.tag}` }
     });
 
