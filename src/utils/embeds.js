@@ -1,5 +1,6 @@
 import { EmbedBuilder } from 'discord.js';
 import { config } from '../../config/config.js';
+import { emojis } from './emojis.js';
 
 export function createEmbed(options = {}) {
   const embed = new EmbedBuilder()
@@ -38,17 +39,17 @@ export function createEmbed(options = {}) {
 }
 
 export function errorEmbed(description) {
-  return createEmbed({ color: config.errorColor, title: '❌ Error', description });
+  return createEmbed({ color: config.errorColor, title: `${emojis.cross} Error`, description });
 }
 
 export function successEmbed(description) {
-  return createEmbed({ color: '#57F287', title: '✅ Éxito', description });
+  return createEmbed({ color: '#57F287', title: `${emojis.check} Éxito`, description });
 }
 
 export function cooldownEmbed(timeLeft) {
   return createEmbed({ 
     color: config.cooldownColor, 
-    title: '⏳ En cooldown', 
+    title: `${emojis.timersand} En cooldown`, 
     description: `Espera **${timeLeft}** segundos antes de usar esto.` 
   });
 }
