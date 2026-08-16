@@ -2,6 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { parseTime, TIME_LIMITS } from '../../utils/parseTime.js';
 import { addModLog } from '../../utils/modlog.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -81,7 +82,7 @@ export default {
       await addModLog(interaction.guildId, target.id, interaction.user.id, 'timeout', reason, parsed.text);
 
       const embed = successEmbed(`**Usuario:** ${target}\n**Duración:** ${parsed.text}\n**Razón:** ${reason}`);
-      embed.setTitle('🔇 Timeout Aplicado');
+      embed.setTitle(`${emojis.mute} Timeout Aplicado`);
 
       await interaction.reply({ embeds: [embed] });
     } catch (err) {

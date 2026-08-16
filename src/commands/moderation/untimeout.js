@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { addModLog } from '../../utils/modlog.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -54,7 +55,7 @@ export default {
       await addModLog(interaction.guildId, target.id, interaction.user.id, 'untimeout', reason);
 
       const embed = successEmbed(`**Usuario:** ${target}\n**Razón:** ${reason}`);
-      embed.setTitle('🔊 Timeout Removido');
+      embed.setTitle(`${emojis.check} Timeout Removido`);
 
       await interaction.reply({ embeds: [embed] });
     } catch (err) {

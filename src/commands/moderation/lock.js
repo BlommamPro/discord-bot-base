@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
 import { successEmbed, errorEmbed } from '../../utils/embeds.js';
+import { emojis } from '../../utils/emojis.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -51,7 +52,7 @@ export default {
       }, { reason: `${interaction.user.tag}: ${reason}` });
 
       const embed = successEmbed(`**Canal:** ${targetChannel}\n**Razón:** ${reason}`);
-      embed.setTitle('🔒 Canal Bloqueado');
+      embed.setTitle(`${emojis.locker} Canal Bloqueado`);
 
       await interaction.reply({ embeds: [embed] });
     } catch (err) {

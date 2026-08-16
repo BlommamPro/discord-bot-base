@@ -17,6 +17,8 @@ export const emojis = {
   on: '<:activ:1017992963374202971>',
   off: '<:disactiv:1017992954297712662>',
   infor: '<:info:1537883147696611448>',
+  locker: '<:fermer:1537883384259543170>',
+  unlocker: '<:ouvert:1537881531178029057>',
   
   // Emojis de economía
   coin: '<:coin:1537886245240176720>',
