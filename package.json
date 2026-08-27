@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "main": "src/index.js",
+  "author": "BlommamPro",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --env-file=.env.dev --watch src/index.js",
