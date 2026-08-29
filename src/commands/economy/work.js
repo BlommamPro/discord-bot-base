@@ -46,8 +46,6 @@ export default {
 
     await updateUserData(interaction.user.id, { $inc: { balance: reward } });
     await setDbCooldown(interaction.user.id, 'work');
-
-    // ===== BADGE =====
     await checkRichBadge(interaction.user.id, client);
 
     const embed = successEmbed(`Trabajaste como **${job}** y ganaste **${reward} coins**!`);

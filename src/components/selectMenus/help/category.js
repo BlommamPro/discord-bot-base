@@ -30,7 +30,6 @@ export default {
 
     const selectedCategory = interaction.values[0];
 
-    // Buscar comandos de la categoría seleccionada (detectada por carpeta)
     const commands = [];
     for (const [name, cmd] of client.slashCommands) {
       const cat = (cmd.CATEGORY || 'general').toLowerCase();

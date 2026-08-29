@@ -1,55 +1,151 @@
 import { EmbedBuilder } from 'discord.js';
 import { config } from '../../config/config.js';
-import { emojis } from './emojis.js';
+import { COLORS, EMOJIS, ICONS, BRANDING } from './embedColors.js';
+
+export { COLORS, EMOJIS, ICONS, BRANDING };
 
 export function createEmbed(options = {}) {
   const embed = new EmbedBuilder()
-    .setColor(options.color || config.color)
+    .setColor(options.color || COLORS.DEFAULT)
     .setTimestamp();
 
-  if (options.title) embed.setTitle(options.title);
-  if (options.description) embed.setDescription(options.description);
-  if (options.fields) embed.addFields(options.fields);
-  
-  // Thumbnail: puede ser string o { url: string }
+  if (options.title) {
+    embed.setTitle(options.title);
+  }
+
+  if (options.author) {
+    embed.setAuthor({
+      name: options.author.name,
+      iconURL: options.author.icon,
+      url: options.author.url
+    });
+  }
+
+  if (options.description) {
+    embed.setDescription(options.description);
+  }
+
+  if (options.fields) {
+    const fields = options.fields.slice(0, 25);
+    for (let i = 0; i < fields.length; i += 3) {
+      const group = fields.slice(i, i + 3);
+      embed.addFields(group);
+    }
+  }
+
   if (options.thumbnail) {
-    if (typeof options.thumbnail === 'string') {
-      embed.setThumbnail(options.thumbnail);
-    } else if (options.thumbnail.url) {
-      embed.setThumbnail(options.thumbnail.url);
-    }
+    embed.setThumbnail(
+      typeof options.thumbnail === 'string' 
+        ? options.thumbnail 
+        : options.thumbnail.url
+    );
   }
-  
-  // Image: puede ser string o { url: string }
+
   if (options.image) {
-    if (typeof options.image === 'string') {
-      embed.setImage(options.image);
-    } else if (options.image.url) {
-      embed.setImage(options.image.url);
-    }
+    embed.setImage(
+      typeof options.image === 'string' 
+        ? options.image 
+        : options.image.url
+    );
   }
-  
+
   if (options.footer) {
-    embed.setFooter({ text: options.footer.text, iconURL: options.footer.icon });
+    embed.setFooter({
+      text: options.footer.text,
+      iconURL: options.footer.icon
+    });
   } else {
-    embed.setFooter({ text: 'EstrellaStudios' });
+    embed.setFooter({ 
+      text: '✦',
+      iconURL: BRANDING.LOGO_URL
+    });
+  }
+
+  if (options.timestamp === false) {
+    embed.setTimestamp(null);
   }
 
   return embed;
 }
 
-export function errorEmbed(description) {
-  return createEmbed({ color: config.errorColor, title: `${emojis.cross} Error`, description });
+
+export function successEmbed(description, title = `${EMOJIS.SUCCESS} Éxito`) {
+  return createEmbed({
+    color: COLORS.SUCCESS,
+    title: title,
+    description: description,
+    thumbnail: ICONS.SUCCESS,
+  });
 }
 
-export function successEmbed(description) {
-  return createEmbed({ color: '#57F287', title: `${emojis.check} Éxito`, description });
+export function errorEmbed(description, title = `${EMOJIS.ERROR} Error`) {
+  return createEmbed({
+    color: COLORS.ERROR,
+    title: title,
+    description: description,
+    thumbnail: ICONS.ERROR,
+  });
+}
+
+export function warningEmbed(description, title = `${EMOJIS.WARNING} Advertencia`) {
+  return createEmbed({
+    color: COLORS.WARNING,
+    title: title,
+    description: description,
+    thumbnail: ICONS.WARNING,
+  });
+}
+
+export function infoEmbed(description, title = `${EMOJIS.INFO} Información`) {
+  return createEmbed({
+    color: COLORS.INFO,
+    title: title,
+    description: description,
+    thumbnail: ICONS.INFO,
+  });
+}
+
+export function economyEmbed(description, title = `${EMOJIS.ECONOMY} Economía`) {
+  return createEmbed({
+    color: COLORS.ECONOMY,
+    title: title,
+    description: description,
+    thumbnail: ICONS.ECONOMY,
+  });
+}
+
+export function levelEmbed(description, title = `${EMOJIS.LEVELING} Niveles`) {
+  return createEmbed({
+    color: COLORS.LEVELING,
+    title: title,
+    description: description,
+    thumbnail: ICONS.LEVELING,
+  });
+}
+
+export function moderationEmbed(description, title = `${EMOJIS.MODERATION} Moderación`) {
+  return createEmbed({
+    color: COLORS.MODERATION,
+    title: title,
+    description: description,
+    thumbnail: ICONS.MODERATION,
+  });
+}
+
+export function giveawayEmbed(description, title = `${EMOJIS.GIVEAWAY} Sorteo`) {
+  return createEmbed({
+    color: COLORS.GIVEAWAY,
+    title: title,
+    description: description,
+    thumbnail: ICONS.GIVEAWAY,
+  });
 }
 
 export function cooldownEmbed(timeLeft) {
-  return createEmbed({ 
-    color: config.cooldownColor, 
-    title: `${emojis.timersand} En cooldown`, 
-    description: `Espera **${timeLeft}** segundos antes de usar esto.` 
+  return createEmbed({
+    color: config.cooldownColor || 0xFEE75C,
+    title: `${EMOJIS.WARNING} En cooldown`,
+    description: `⏳ Espera **${timeLeft}** segundos antes de usar esto.`,
+    thumbnail: ICONS.WARNING,
   });
 }

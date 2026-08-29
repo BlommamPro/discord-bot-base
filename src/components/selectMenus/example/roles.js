@@ -17,19 +17,16 @@ export default {
   async execute(client, interaction, args, guildData, userData) {
     const selectedRole = interaction.values[0];
     
-    // Verificar que el rol existe
     const role = interaction.guild.roles.cache.get(selectedRole);
     if (!role) {
       return interaction.reply({ embeds: [errorEmbed('Ese rol no existe')], flags: MessageFlags.Ephemeral });
     }
 
-    // Verificar que el bot puede gestionar roles
     if (!role.editable) {
       return interaction.reply({ 
         embeds: [errorEmbed('No tengo permisos para darte ese rol')], flags: MessageFlags.Ephemeral });
     }
 
-    // Quitar o dar el rol
     if (interaction.member.roles.cache.has(selectedRole)) {
       await interaction.member.roles.remove(selectedRole);
       await interaction.reply({ 

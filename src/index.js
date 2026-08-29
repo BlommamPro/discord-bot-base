@@ -6,6 +6,7 @@ import { loadComponents } from "./handlers/componentHandler.js";
 import { connectDB } from "./utils/database.js";
 import { logger } from "./utils/logger.js";
 import { setupProcessHandlers } from "./utils/anticrash.js";
+import { setupDBShutdown } from './utils/database.js';
 
 const client = new Client({
   intents: [
@@ -28,7 +29,6 @@ const client = new Client({
   allowedMentions: { parse: ["users", "roles"], repliedUser: true },
 });
 
-// ===== COLECCIONES =====
 client.slashCommands = new Collection();
 client.contextMenus = new Collection();
 client.buttons = new Collection();
@@ -36,20 +36,22 @@ client.selectMenus = new Collection();
 client.modals = new Collection();
 client.cooldowns = new Collection();
 
-// ===== ANTICRASH =====
-setupProcessHandlers(client);
+async function start() {
+  setupProcessHandlers(client);
 
-// ===== CONECTAR DB =====
-if (config.mongoURL) {
-  await connectDB();
+  if (config.mongoURL) {
+    await connectDB();
+    setupDBShutdown();
+  }
+
+  await loadEvents(client);
+  await loadCommands(client);
+  await loadComponents(client);
+
+  client.login(config.token).catch((err) => {
+    logger.error("Error al iniciar sesión:", err);
+    process.exit(1);
+  });
 }
 
-// ===== CARGAR HANDLERS =====
-await loadEvents(client);
-await loadCommands(client);
-await loadComponents(client);
-
-client.login(config.token).catch((err) => {
-  logger.error("Error al iniciar sesión:", err);
-  process.exit(1);
-});
+start();

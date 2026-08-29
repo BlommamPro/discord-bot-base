@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { SlashCommandBuilder } from 'discord.js';
+import { createEmbed, COLORS } from '../../utils/embeds.js';
 import { getUserData } from '../../utils/guildData.js';
 
 function getBankCapacity(level) {
@@ -34,17 +34,21 @@ export default {
     const maxCapacity = getBankCapacity(level);
     const percentUsed = Math.round((bank / maxCapacity) * 100);
 
+    const filled = Math.round((bank / maxCapacity) * 10);
+    const progressBar = '█'.repeat(filled) + '░'.repeat(10 - filled);
+
     const embed = createEmbed({
+      color: COLORS.ECONOMY,
       title: `🏦 Balance de ${target.username}`,
       thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }),
-      fields: [
-        { name: '💰 En Mano (Wallet)', value: `\`${wallet} coins\``, inline: true },
-        { name: '🏦 Banco', value: `\`${bank} / ${maxCapacity} coins\``, inline: true },
-        { name: '📊 Total', value: `\`${total} coins\``, inline: true },
-        { name: '🔒 Protegido', value: `\`${Math.round((bank / (total || 1)) * 100)}%\``, inline: true },
-        { name: '📈 Capacidad Banco', value: `\`${percentUsed}%\` usada`, inline: true },
-        { name: '⭐ Nivel Global', value: `\`${level}\``, inline: true }
-      ]
+      description: [
+        `💰 **En Mano:** ${wallet} coins`,
+        `🏦 **Banco:** ${bank} / ${maxCapacity} coins`,
+        `📊 **Total:** ${total} coins`,
+        '',
+        `📈 **Capacidad:** \`${progressBar}\` ${percentUsed}%`,
+        `⭐ **Nivel:** ${level}`
+      ].join('\n')
     });
 
     await interaction.reply({ embeds: [embed] });

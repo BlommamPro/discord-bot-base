@@ -3,7 +3,6 @@ import { config } from '../../config/config.js';
 import { loadCommandsForDeploy, loadContextMenusForDeploy } from '../handlers/commandHandler.js';
 import { logger } from './logger.js';
 
-// Timeout de seguridad: 5 minutos (Discord a veces tarda mucho con muchos comandos)
 setTimeout(() => {
   logger.warn('Forzando cierre del deploy por timeout de seguridad (5 min)...');
   process.exit(0);
@@ -24,7 +23,7 @@ setTimeout(() => {
 
     const rest = new REST({ 
       version: '10',
-      timeout: 120000,  // 2 minutos por peticion
+      timeout: 120000,
       retries: 3
     }).setToken(config.token);
 

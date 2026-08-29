@@ -3,35 +3,54 @@ import { config } from '../../config/config.js';
 import { logger } from './logger.js';
 
 let supportChannel = null;
+let isHandlingError = false;
 
 export function setSupportChannel(channel) {
   supportChannel = channel;
 }
 
 export async function sendErrorToSupport(type, error, context = '') {
-  logger.error(`[ANTICRASH] ${type}:`, error);
+  if (isHandlingError) {
+    logger.warn('⚠️ Ya hay un error en proceso, evitando bucle...');
+    return;
+  }
 
-  if (!config.supportChannelId || !supportChannel) return;
-
-  const stack = error?.stack || 'Sin stack trace';
-  const message = error?.message || String(error);
-  const truncatedStack = stack.length > 1500 ? stack.slice(0, 1500) + '...' : stack;
-
-  const embed = new EmbedBuilder()
-    .setColor(config.errorColor)
-    .setTitle('💥 Error Catastrófico')
-    .setDescription(`**Tipo:** \`${type}\``)
-    .addFields(
-      { name: '📝 Mensaje', value: `\`\`\`${message.slice(0, 1000)}\`\`\`` },
-      { name: '📂 Contexto', value: context || 'N/A' },
-      { name: '📚 Stack Trace', value: `\`\`\`js\n${truncatedStack}\n\`\`\`` }
-    )
-    .setTimestamp();
+  isHandlingError = true;
 
   try {
-    await supportChannel.send({ embeds: [embed] });
+    logger.error(`[ANTICRASH] ${type}:`, error);
+
+    if (!config.supportChannelId || !supportChannel) {
+      logger.warn('Canal de soporte no configurado, no se puede enviar el error');
+      return;
+    }
+
+    const channel = supportChannel;
+    if (!channel.isTextBased()) {
+      logger.warn('El canal de soporte no es un canal de texto');
+      return;
+    }
+
+    const stack = error?.stack || 'Sin stack trace';
+    const message = error?.message || String(error);
+    const truncatedStack = stack.length > 1500 ? stack.slice(0, 1500) + '...' : stack;
+
+    const embed = new EmbedBuilder()
+      .setColor(config.errorColor || '#ED4245')
+      .setTitle('💥 Error Catastrófico')
+      .setDescription(`**Tipo:** \`${type}\``)
+      .addFields(
+        { name: '📝 Mensaje', value: `\`\`\`${message.slice(0, 1000)}\`\`\`` },
+        { name: '📂 Contexto', value: context || 'N/A' },
+        { name: '📚 Stack Trace', value: `\`\`\`js\n${truncatedStack}\n\`\`\`` }
+      )
+      .setTimestamp();
+
+    await channel.send({ embeds: [embed] });
   } catch (err) {
     logger.error('No pude enviar error al canal de soporte:', err.message);
+  } finally {
+    isHandlingError = false;
   }
 }
 
@@ -56,5 +75,15 @@ export function setupProcessHandlers(client) {
 
   client.on('warn', (info) => {
     logger.warn('[DISCORD WARN]', info);
+  });
+
+  process.on('SIGINT', () => {
+    logger.warn('Recibida señal SIGINT, cerrando...');
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    logger.warn('Recibida señal SIGTERM, cerrando...');
+    process.exit(0);
   });
 }

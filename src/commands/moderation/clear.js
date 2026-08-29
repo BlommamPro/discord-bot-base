@@ -44,7 +44,7 @@ export default {
 
     const botMember = interaction.guild.members.me;
     const botPerms = targetChannel.permissionsFor(botMember);
-    if (!botPerms.has('ManageMessages')) {
+    if (!botPerms.has(PermissionFlagsBits.ManageMessages)) {
       return interaction.reply({ embeds: [errorEmbed('No tengo permiso para borrar mensajes en ese canal.')], flags: MessageFlags.Ephemeral });
     }
 

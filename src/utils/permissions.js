@@ -11,13 +11,19 @@ export function checkPermissions(member, permissions = []) {
   return { allowed: missing.length === 0, missing };
 }
 
-export function checkBotPermissions(guildMe, permissions = []) {
+export function checkBotPermissions(guildMe, permissions = [], channel = null) {
   if (!permissions.length) return { allowed: true };
   const missing = [];
+
+  const permissionsToCheck = channel 
+    ? channel.permissionsFor(guildMe) 
+    : guildMe.permissions;
+
   for (const perm of permissions) {
-    if (!guildMe.permissions.has(PermissionsBitField.Flags[perm])) {
+    if (!permissionsToCheck.has(PermissionsBitField.Flags[perm])) {
       missing.push(perm);
     }
   }
+  
   return { allowed: missing.length === 0, missing };
 }

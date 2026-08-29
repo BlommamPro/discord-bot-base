@@ -1,13 +1,8 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS } from '../../utils/embeds.js';
+import { createProgressBar, formatPercentage } from '../../utils/embedDecorations.js';
 import { getGuildLevel, getXpForLevel } from '../../utils/levelSystem.js';
 import { getUserData } from '../../utils/guildData.js';
-
-function generateProgressBar(current, total, length = 15) {
-  const filled = Math.round((current / total) * length);
-  const empty = length - filled;
-  return '█'.repeat(filled) + '░'.repeat(empty);
-}
 
 function getGlobalXpForLevel(level) {
   return level * level * 100;
@@ -46,39 +41,48 @@ export default {
     if (type === 'global') {
       const data = await getUserData(target.id, target.username);
       const xpNeeded = getGlobalXpForLevel(data.level);
-      const progressBar = generateProgressBar(data.xp, xpNeeded);
-      const percentage = Math.round((data.xp / xpNeeded) * 100);
+      const progressBar = createProgressBar(data.xp, xpNeeded, 20);
+      const percentage = formatPercentage(data.xp, xpNeeded);
 
       const embed = createEmbed({
+        color: COLORS.LEVELING,
         title: `🌍 Rango Global de ${target.username}`,
         thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }),
-        fields: [
-          { name: '⭐ Nivel', value: `\`${data.level}\``, inline: true },
-          { name: '✨ XP', value: `\`${data.xp} / ${xpNeeded}\``, inline: true },
-          { name: '📈 Progreso', value: `\`${percentage}%\`\n\`${progressBar}\``, inline: false },
-          { name: '💬 Mensajes', value: `\`${data.messages}\``, inline: true },
-          { name: '💰 Dinero', value: `\`${data.balance} coins\``, inline: true }
-        ]
+        description: [
+          `⭐ **Nivel:** ${data.level}`,
+          `✨ **XP:** ${data.xp} / ${xpNeeded}`,
+          `📈 **Progreso:** \`${progressBar}\` ${percentage}%`,
+          `💬 **Mensajes:** ${data.messages}`,
+          `💰 **Dinero:** ${data.balance} coins`
+        ].join('\n'),
+        footer: {
+          text: `Solicitado por ${interaction.user.username}`,
+          icon: interaction.user.displayAvatarURL()
+        }
       });
 
       return interaction.reply({ embeds: [embed] });
     }
 
-    // Nivel del servidor
     const data = await getGuildLevel(interaction.guildId, target.id);
     const xpNeeded = getXpForLevel(data.level);
-    const progressBar = generateProgressBar(data.xp, xpNeeded);
-    const percentage = Math.round((data.xp / xpNeeded) * 100);
+    const progressBar = createProgressBar(data.xp, xpNeeded, 20);
+    const percentage = formatPercentage(data.xp, xpNeeded);
 
     const embed = createEmbed({
+      color: COLORS.LEVELING,
       title: `🏠 Rango de ${target.username} en ${interaction.guild.name}`,
       thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }),
-      fields: [
-        { name: '⭐ Nivel', value: `\`${data.level}\``, inline: true },
-        { name: '✨ XP', value: `\`${data.xp} / ${xpNeeded}\``, inline: true },
-        { name: '📈 Progreso', value: `\`${percentage}%\`\n\`${progressBar}\``, inline: false },
-        { name: '💬 Mensajes', value: `\`${data.messages}\``, inline: true }
-      ]
+      description: [
+        `⭐ **Nivel:** ${data.level}`,
+        `✨ **XP:** ${data.xp} / ${xpNeeded}`,
+        `📈 **Progreso:** \`${progressBar}\` ${percentage}%`,
+        `💬 **Mensajes:** ${data.messages}`
+      ].join('\n'),
+      footer: {
+        text: `Solicitado por ${interaction.user.username}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     await interaction.reply({ embeds: [embed] });

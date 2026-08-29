@@ -1,8 +1,3 @@
-// Emojis personalizados del bot
-// Formatos:
-// Estático: <:nombre:id>
-// Animado:  <a:nombre:id>
-
 export const emojis = {
   // Emojis animados
   a_on: '<a:discordon:1017992953140105316>',

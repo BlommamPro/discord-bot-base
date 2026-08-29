@@ -20,16 +20,14 @@ export default {
     logger.success(`${client.user.tag} está online en ${client.guilds.cache.size} servidores`);
     logger.info(`📊 ${client.users.cache.size} usuarios | ${client.channels.cache.size} canales`);
 
-    // Iniciar revisión automática de giveaways cada 30 segundos
     startGiveawayChecker(client);
 
-    // ===== OBTENER CANAL DE SOPORTE =====
     if (config.supportChannelId) {
       try {
         const channel = await client.channels.fetch(config.supportChannelId);
         if (channel) {
-          setSupportChannel(channel);        // para anticrash.js
-          setSupportChannelForErrors(channel); // para interactionCreate.js
+          setSupportChannel(channel);
+          setSupportChannelForErrors(channel);
           logger.success(`Canal de soporte configurado: #${channel.name}`);
         }
       } catch (err) {

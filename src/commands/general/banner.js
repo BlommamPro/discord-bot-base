@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS, errorEmbed } from '../../utils/embeds.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -21,7 +21,6 @@ export default {
   async execute(client, interaction, guildData, userData) {
     const target = interaction.options.getUser('usuario') || interaction.user;
 
-    // fetch() para obtener el banner (no viene en el objeto user básico)
     const fetchedUser = await client.users.fetch(target.id, { force: true });
 
     if (!fetchedUser.banner) {
@@ -32,8 +31,13 @@ export default {
     }
 
     const embed = createEmbed({
+      color: COLORS.GENERAL,
       title: `🖼️ Banner de ${fetchedUser.username}`,
-      image: { url: fetchedUser.bannerURL({ size: 4096, dynamic: true }) }
+      image: { url: fetchedUser.bannerURL({ size: 4096, dynamic: true }) },
+      footer: {
+        text: `Solicitado por ${interaction.user.username}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     await interaction.reply({ embeds: [embed] });

@@ -10,8 +10,6 @@ import { successEmbed } from '../../../utils/embeds.js';
  */
 
 export default {
-  // Si no especificas customId, se infiere de la ruta: example-confirm
-  // Pero puedes sobrescribirlo:
   customId: 'example-confirm',
 
   PERMISSIONS: [],
@@ -20,7 +18,6 @@ export default {
   COOLDOWN: 5,
 
   async execute(client, interaction, args, guildData, userData) {
-    // args será ['123456789'] si el customId era example-confirm-{123456789}
     const userId = args[0];
 
     if (userId && userId !== interaction.user.id) {

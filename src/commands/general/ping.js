@@ -17,8 +17,6 @@ export default {
 
   async execute(client, interaction, guildData, userData) {
     await interaction.reply({ content: `${emojis.pingconnetion} Calculando ${emojis.load}` });
-    
-    // fetchReply() como método SÍ funciona y no está obsoleto
     const sent = await interaction.fetchReply();
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
 

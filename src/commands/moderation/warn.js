@@ -55,8 +55,6 @@ export default {
     await addModLog(interaction.guildId, target.id, interaction.user.id, 'warn', reason, null, warnDoc._id.toString());
 
     const autoAction = await checkAutoAction(interaction.guild, target, warnCount);
-
-    // ===== FIX: Verificar configuracion de DM antes de enviar =====
     const warnConfig = await getWarnConfig(interaction.guildId);
     if (warnConfig.dmUser) {
       try {

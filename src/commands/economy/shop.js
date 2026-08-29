@@ -21,8 +21,7 @@ export default {
       return interaction.reply({
         embeds: [errorEmbed('La tienda de este servidor está vacía. Los admins pueden usar `/shopconfig` para añadir items.')], flags: MessageFlags.Ephemeral });
     }
-
-    // Construir descripción con items más claros
+    
     const itemsText = items.map((item, i) => {
       const stockText = item.stock >= 0 ? `| 📦 ${item.stock}` : '| ∞';
       const roleText = item.roleId ? `| 🎁 <@&${item.roleId}>` : '';

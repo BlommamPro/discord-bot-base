@@ -14,13 +14,14 @@ export function parseTime(input) {
   if (matches.length === 0) return null;
 
   let totalMs = 0;
+  const usedUnits = new Set();
 
   const multipliers = {
-    s: 1000,           // segundos
-    m: 60 * 1000,      // minutos
-    h: 60 * 60 * 1000, // horas
-    d: 24 * 60 * 60 * 1000,  // días
-    w: 7 * 24 * 60 * 60 * 1000 // semanas
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+    w: 7 * 24 * 60 * 60 * 1000
   };
 
   for (const match of matches) {
@@ -28,12 +29,17 @@ export function parseTime(input) {
     const unit = match[2].toLowerCase();
 
     if (value <= 0 || !multipliers[unit]) continue;
+
+    if (usedUnits.has(unit)) {
+      return null;
+    }
+    usedUnits.add(unit);
+
     totalMs += value * multipliers[unit];
   }
 
   if (totalMs <= 0) return null;
 
-  // Generar texto legible
   const seconds = Math.floor(totalMs / 1000);
   const mins = Math.floor(seconds / 60);
   const hours = Math.floor(mins / 60);

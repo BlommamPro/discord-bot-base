@@ -87,7 +87,6 @@ export default {
       boughtAt: new Date()
     };
 
-    // FIX: operacion atomica para evitar race conditions en inventario
     const updatedExisting = await User.findOneAndUpdate(
       { userId: interaction.user.id, 'inventory.itemId': item.itemId },
       {

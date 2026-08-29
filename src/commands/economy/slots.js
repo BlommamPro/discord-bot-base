@@ -62,7 +62,6 @@ export default {
       if (a === '7️⃣') {
         winnings = amount * 10;
         title = '🎰 ¡MEGA JACKPOT! 7️⃣7️⃣7️⃣';
-        // ===== BADGE =====
         await checkAndAwardBadge(interaction.user.id, 'jackpot', client);
       } else if (a === '💎') {
         winnings = amount * 5;
@@ -80,8 +79,6 @@ export default {
     }
 
     await updateUserData(interaction.user.id, { $inc: { balance: Math.floor(winnings) } });
-
-    // ===== BADGE =====
     if (winnings > 0) await checkRichBadge(interaction.user.id, client);
 
     const display = `| ${a} | ${b} | ${c} |`;

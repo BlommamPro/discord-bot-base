@@ -2,8 +2,6 @@ import { Giveaway } from '../models/Giveaway.js';
 import { createEmbed } from './embeds.js';
 import { logger } from './logger.js';
 
-const editCooldowns = new Map();
-
 export async function getActiveGiveaways() {
   return await Giveaway.find({ ended: false, endTime: { $gt: new Date() } });
 }
@@ -21,8 +19,16 @@ export async function endGiveaway(client, giveawayId, guildId = null) {
   const channel = await guild.channels.fetch(gw.channelId).catch(() => null);
   if (!channel) return null;
 
-  const message = await channel.messages.fetch(gw.messageId).catch(() => null);
-  if (!message) return null;
+  const message = await channel.messages.fetch(gw.messageId).catch(() => {
+    logger.warn(`Mensaje del giveaway ${gw.giveawayId} no encontrado, finalizando en DB`);
+    return null;
+  });
+
+  if (!message) {
+    gw.ended = true;
+    await gw.save();
+    return gw;
+  }
 
   const reaction = message.reactions.cache.get('🎉');
   let users = [];
@@ -53,7 +59,6 @@ export async function endGiveaway(client, giveawayId, guildId = null) {
     ? winners.map(id => `<@${id}>`).join(', ')
     : 'Nadie participó';
 
-  // FIX: mostrar rol requerido en embed final
   const finalLines = [
     `**Premio:** ${gw.prize}`,
     `**Ganador(es):** ${winnerText}`,
@@ -108,17 +113,17 @@ export async function addParticipant(giveawayId, userId) {
 }
 
 export async function updateGiveawayEmbed(message, giveawayId) {
-  const now = Date.now();
-  const lastEdit = editCooldowns.get(giveawayId) || 0;
-  if (now - lastEdit < 8000) return;
-
   const gw = await Giveaway.findOne({ giveawayId, ended: false });
   if (!gw) return;
+
+  const now = Date.now();
+  const lastEdit = gw.lastEdit ? new Date(gw.lastEdit).getTime() : 0;
+  
+  if (now - lastEdit < 8000) return;
 
   const timeLeft = Math.ceil((gw.endTime - now) / 1000);
   if (timeLeft <= 0) return;
 
-  // FIX: mostrar rol requerido en embed de actualización
   const descriptionLines = [
     `**Premio:** ${gw.prize}`,
     `**Ganadores:** ${gw.winnerCount}`,
@@ -140,7 +145,9 @@ export async function updateGiveawayEmbed(message, giveawayId) {
 
   try {
     await message.edit({ embeds: [embed] });
-    editCooldowns.set(giveawayId, now);
+
+    gw.lastEdit = new Date();
+    await gw.save();
   } catch { /* ignorar */ }
 }
 

@@ -46,9 +46,6 @@ export default {
       const name = ACTION_NAMES[entry.action] || entry.action;
       const time = `<t:${Math.floor(entry.createdAt.getTime() / 1000)}:R>`;
       const mod = `<@${entry.moderatorId}>`;
-      
-      // FIX: Si es una warn, mostrar el warnId (usable con /unwarn)
-      // Si no, mostrar el _id del modlog
       const displayId = entry.warnId ? entry.warnId : entry._id.toString();
       
       let value = `**Mod:** ${mod} | **Razón:** ${entry.reason}`;

@@ -21,50 +21,48 @@ async function loadFiles(dir) {
   return files;
 }
 
-/**
- * Extrae la categoría desde la ruta del archivo.
- * Ej: src/commands/economy/balance.js → "economy"
- * Ej: src/commands/general/ping.js → "general"
- */
 function getCategoryFromPath(filePath, basePath) {
   const rel = relative(basePath, filePath).replace(/\\/g, '/');
   const folder = rel.split('/')[0];
   return folder || 'general';
 }
 
-// ===== CARGAR COMANDOS EN EL CLIENTE =====
-export async function loadCommands(client) {
-  const slashPath = join(__dirname, '../commands');
-  const files = await loadFiles(slashPath);
-
-  for (const file of files) {
-    const { default: cmd } = await import('file://' + file);
-    if (!cmd || !cmd.CMD) continue;
-
-    // Detectar categoría automáticamente por carpeta
-    const autoCategory = getCategoryFromPath(file, slashPath);
-    cmd.CATEGORY = cmd.CATEGORY || autoCategory;
-
-    const name = cmd.CMD.name;
-    client.slashCommands.set(name, cmd);
-  }
-  logger.success(`${client.slashCommands.size} slash commands cargados`);
-}
-
-// ===== CARGAR PARA DEPLOY =====
-export async function loadCommandsForDeploy() {
+async function loadAllCommandFiles() {
   const slashPath = join(__dirname, '../commands');
   const files = await loadFiles(slashPath);
   const commands = [];
 
   for (const file of files) {
-    const { default: cmd } = await import('file://' + file);
-    if (cmd?.CMD) {
-      cmd.CATEGORY = cmd.CATEGORY || getCategoryFromPath(file, slashPath);
-      commands.push(cmd);
+    try {
+      const { default: cmd } = await import('file://' + file);
+      if (cmd?.CMD) {
+        cmd.CATEGORY = cmd.CATEGORY || getCategoryFromPath(file, slashPath);
+        commands.push(cmd);
+      }
+    } catch (err) {
+      logger.error(`Error cargando comando desde ${file}:`, err.message);
     }
   }
   return commands;
+}
+
+export async function loadCommands(client) {
+  const commands = await loadAllCommandFiles();
+  
+  for (const cmd of commands) {
+    try {
+      const name = cmd.CMD.name;
+      client.slashCommands.set(name, cmd);
+    } catch (err) {
+      logger.error(`Error registrando comando:`, err.message);
+    }
+  }
+  
+  logger.success(`${client.slashCommands.size} slash commands cargados`);
+}
+
+export async function loadCommandsForDeploy() {
+  return await loadAllCommandFiles();
 }
 
 export async function loadContextMenusForDeploy() {
@@ -73,8 +71,12 @@ export async function loadContextMenusForDeploy() {
   const menus = [];
 
   for (const file of files) {
-    const { default: menu } = await import('file://' + file);
-    if (menu?.CMD) menus.push(menu);
+    try {
+      const { default: menu } = await import('file://' + file);
+      if (menu?.CMD) menus.push(menu);
+    } catch (err) {
+      logger.error(`Error cargando context menu desde ${file}:`, err.message);
+    }
   }
   return menus;
 }

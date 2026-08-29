@@ -56,8 +56,6 @@ export default {
 
     const endTime = Date.now() + parsed.ms;
     const giveawayId = generateGiveawayId();
-
-    // FIX: mostrar rol requerido en el embed
     const descriptionLines = [
       `**Premio:** ${prize}`,
       `**Ganadores:** ${winnerCount}`,

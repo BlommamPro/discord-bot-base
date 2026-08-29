@@ -37,11 +37,9 @@ export async function updateWarnConfig(guildId, update) {
   );
 }
 
-// Verificar si se debe ejecutar una acción automática
 export async function checkAutoAction(guild, member, warnCount) {
   const config = await getWarnConfig(guild.id);
-  
-  // Buscar si hay una acción configurada para esta cantidad de warns
+
   const actionRule = config.actions.find(a => a.warns === warnCount);
   if (!actionRule || actionRule.action === 'none') return null;
 

@@ -1,4 +1,3 @@
-// src/commands/admin/levelconfig.js
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { createEmbed, successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { LevelConfig } from '../../models/LevelConfig.js';
@@ -34,8 +33,12 @@ export default {
     )
     .addSubcommand(sub =>
       sub.setName('reset')
-         .setDescription('Reiniciar niveles de un usuario o todos')
-         .addUserOption(opt => opt.setName('usuario').setDescription('Usuario (dejar vacío para TODOS)').setRequired(false))
+         .setDescription('Reiniciar niveles de un usuario o todos (SOLO EN ESTE SERVIDOR)')
+         .addUserOption(opt => 
+           opt.setName('usuario')
+              .setDescription('Usuario a reiniciar (dejar vacío para TODOS en este servidor)')
+              .setRequired(false)
+         )
     )
     .addSubcommand(sub =>
       sub.setName('view')
@@ -68,10 +71,9 @@ export default {
       const level = interaction.options.getInteger('nivel');
       const role = interaction.options.getRole('rol');
 
-      // FIX: usar array "roles" en lugar de objeto "levelRoles"
       await LevelConfig.findOneAndUpdate(
         { guildId },
-        { $pull: { roles: { level } } },  // quitar si ya existe
+        { $pull: { roles: { level } } },
         { upsert: true }
       );
       await LevelConfig.findOneAndUpdate(
@@ -88,7 +90,6 @@ export default {
     if (sub === 'removerole') {
       const level = interaction.options.getInteger('nivel');
       
-      // FIX: usar $pull en array "roles"
       await LevelConfig.findOneAndUpdate(
         { guildId },
         { $pull: { roles: { level } } }
@@ -110,22 +111,41 @@ export default {
       const target = interaction.options.getUser('usuario');
 
       if (target) {
-        await GuildLevel.findOneAndUpdate(
-          { guildId, userId: target.id },
+        const result = await GuildLevel.findOneAndUpdate(
+          { 
+            guildId: guildId,
+            userId: target.id 
+          },
           { xp: 0, level: 1 },
-          { upsert: true }
+          { upsert: true, new: true }
         );
-        return interaction.reply({ embeds: [successEmbed(`Nivel de ${target} reiniciado.`)] });
-      } else {
-        await GuildLevel.deleteMany({ guildId });
-        return interaction.reply({ embeds: [successEmbed('Todos los niveles del servidor han sido reiniciados.')] });
+
+        const existed = result && result.xp !== undefined;
+
+        return interaction.reply({ 
+          embeds: [successEmbed(
+            `Nivel de ${target} reiniciado en **${interaction.guild.name}**.` +
+            (existed ? '' : ' (El usuario no tenía datos previos)')
+          )] 
+        });
       }
+
+      const deletedCount = await GuildLevel.deleteMany({ 
+        guildId: guildId
+      });
+
+      const message = deletedCount.deletedCount > 0
+        ? `✅ Niveles de **${deletedCount.deletedCount}** usuarios reiniciados en **${interaction.guild.name}**.`
+        : 'ℹ️ No había niveles registrados en este servidor.';
+
+      return interaction.reply({ 
+        embeds: [successEmbed(message)] 
+      });
     }
 
     if (sub === 'view') {
       const config = await LevelConfig.findOne({ guildId });
       
-      // FIX: leer desde array "roles"
       const rolesText = config?.roles?.length
         ? config.roles.map(r => `Nivel ${r.level}: <@&${r.roleId}>`).join('\n')
         : 'Ninguno';

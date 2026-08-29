@@ -33,7 +33,6 @@ function getCustomIdFromPath(filePath, type) {
 }
 
 export async function loadComponents(client) {
-  // BUTTONS
   const btnPath = join(__dirname, '../components/buttons');
   const btnFiles = await loadFiles(btnPath);
   for (const file of btnFiles) {
@@ -44,7 +43,6 @@ export async function loadComponents(client) {
   }
   logger.success(`${client.buttons.size} buttons cargados`);
 
-  // SELECT MENUS
   const smPath = join(__dirname, '../components/selectMenus');
   const smFiles = await loadFiles(smPath);
   for (const file of smFiles) {
@@ -55,7 +53,6 @@ export async function loadComponents(client) {
   }
   logger.success(`${client.selectMenus.size} select menus cargados`);
 
-  // MODALS
   const modalPath = join(__dirname, '../components/modals');
   const modalFiles = await loadFiles(modalPath);
   for (const file of modalFiles) {
@@ -66,7 +63,6 @@ export async function loadComponents(client) {
   }
   logger.success(`${client.modals.size} modals cargados`);
 
-  // CONTEXT MENUS
   const ctxPath = join(__dirname, '../components/contextMenus');
   const ctxFiles = await loadFiles(ctxPath);
   for (const file of ctxFiles) {

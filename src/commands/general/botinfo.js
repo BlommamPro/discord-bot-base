@@ -1,10 +1,9 @@
 import { SlashCommandBuilder, version as djsVersion } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS, BRANDING } from '../../utils/embeds.js';
 import { config } from '../../../config/config.js';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { emojis } from '../../utils/emojis.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -59,11 +58,12 @@ export default {
     const nodeVersion = process.version;
 
     const embed = createEmbed({
-      title: `${emojis.infor} ${client.user.username}`,
+      color: COLORS.INFO,
+      title: `📊 ${client.user.username}`,
       thumbnail: client.user.displayAvatarURL({ dynamic: true, size: 256 }),
-      description: `**${client.user.username}** es un bot multifuncional con economia, niveles, moderacion, sorteos y mas.`,
+      description: `**${client.user.username}** es un bot multifuncional con economía, niveles, moderación, sorteos y más.`,
       fields: [
-        { name: '📦 Version', value: `\`v${version}\``, inline: true },
+        { name: '📦 Versión', value: `\`v${version}\``, inline: true },
         { name: '⏱️ Uptime', value: `\`${uptime}\``, inline: true },
         { name: '📡 Ping', value: `\`${client.ws.ping}ms\``, inline: true },
         { name: '🏘️ Servidores', value: `\`${totalGuilds}\``, inline: true },
@@ -76,7 +76,11 @@ export default {
         { name: '🧠 RAM (RSS)', value: `\`${formatBytes(memoryUsage.rss)}\``, inline: true },
         { name: '👑 Owner(s)', value: config.ownerIds.length > 0 ? config.ownerIds.map(id => `<@${id}>`).join(', ') : 'No configurado', inline: false },
         { name: '📅 Creado', value: `<t:${Math.floor(client.user.createdTimestamp / 1000)}:R>`, inline: true }
-      ]
+      ],
+      footer: {
+        text: `Solicitado por ${interaction.user.username}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     await interaction.reply({ embeds: [embed] });

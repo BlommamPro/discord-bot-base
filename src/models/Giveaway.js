@@ -8,12 +8,14 @@ const GiveawaySchema = new mongoose.Schema({
   prize: { type: String, required: true },
   winnerCount: { type: Number, default: 1 },
   endTime: { type: Date, required: true },
-  hostedBy: { type: String, default: '' },        // Nombre del host
-  hostedById: { type: String, default: '' },      // ID del host
+  hostedBy: { type: String, default: '' },
+  hostedById: { type: String, default: '' },
   requiredRoleId: { type: String, default: null },
   participants: { type: [String], default: [] },
   winners: { type: [String], default: [] },
-  ended: { type: Boolean, default: false }
+  ended: { type: Boolean, default: false },
+  
+  lastEdit: { type: Date, default: null }
 });
 
 export const Giveaway = mongoose.model('Giveaway', GiveawaySchema);

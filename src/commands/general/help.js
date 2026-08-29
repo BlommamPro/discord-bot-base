@@ -1,7 +1,6 @@
 import { SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder , MessageFlags} from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
 
-// Emojis por defecto para categorías conocidas
 const DEFAULT_EMOJIS = {
   general: '🌐',
   moderation: '🛡️',
@@ -47,7 +46,6 @@ export default {
   COOLDOWN: 5,
 
   async execute(client, interaction, guildData, userData) {
-    // Detectar TODAS las categorías automáticamente desde client.slashCommands
     const categories = new Map();
 
     for (const [name, cmd] of client.slashCommands) {

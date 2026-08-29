@@ -22,8 +22,6 @@ export default {
 
   async execute(client, interaction, guildData, userData) {
     const id = interaction.options.getString('id').toUpperCase();
-    
-    // ===== FIX: pasar guildId para que solo funcione en este servidor =====
     const result = await endGiveaway(client, id, interaction.guildId);
 
     if (!result) {

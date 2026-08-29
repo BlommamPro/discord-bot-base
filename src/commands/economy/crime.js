@@ -51,7 +51,6 @@ export default {
       });
       await setDbCooldown(interaction.user.id, 'crime');
 
-      // ===== BADGES =====
       const newCrimes = (userData.crimes || 0) + 1;
       if (newCrimes >= 50) await checkAndAwardBadge(interaction.user.id, 'crime_lord', client);
       await checkRichBadge(interaction.user.id, client);

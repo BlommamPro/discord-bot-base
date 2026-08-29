@@ -3,7 +3,7 @@ import { successEmbed, errorEmbed } from '../../utils/embeds.js';
 import { updateUserData } from '../../utils/guildData.js';
 
 function getBankCapacity(level) {
-  return level * 5000; // Nivel 1 = 5000, nivel 10 = 50000, etc.
+  return level * 5000;
 }
 
 export default {
@@ -50,8 +50,7 @@ export default {
         flags: MessageFlags.Ephemeral
       });
     }
-
-    // ===== RESTRICCION 1: No puedes quedarte con 0 en mano =====
+    
     if (amount >= currentWallet) {
       amount = currentWallet - 1;
       if (amount <= 0) {
@@ -62,7 +61,6 @@ export default {
       }
     }
 
-    // ===== RESTRICCION 2: Capacidad maxima del banco =====
     const spaceLeft = maxCapacity - currentBank;
     if (spaceLeft <= 0) {
       return interaction.reply({

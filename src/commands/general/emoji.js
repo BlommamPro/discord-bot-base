@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
-import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS, errorEmbed } from '../../utils/embeds.js';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -58,7 +58,6 @@ export default {
       const end = start + ITEMS_PER_PAGE;
       const pageEmojis = emojis.slice(start, end);
 
-      // FIX: formato copiable <a:name:id> o <:name:id>
       const lines = pageEmojis.map(e => {
         const textFormat = e.animated ? `<a:${e.name}:${e.id}>` : `<:${e.name}:${e.id}>`;
         return `${e.toString()} \`${textFormat}\``;
@@ -68,6 +67,7 @@ export default {
       const animatedCount = emojis.filter(e => e.animated).length;
 
       return createEmbed({
+        color: COLORS.GENERAL,
         title: `😀 Emojis de ${guild.name}`,
         description: lines.join('\n'),
         fields: [
@@ -75,7 +75,10 @@ export default {
           { name: '✨ Animados', value: `\`${animatedCount}\``, inline: true },
           { name: '📊 Total', value: `\`${emojis.length}\``, inline: true }
         ],
-        footer: { text: `Página ${page + 1} de ${totalPages} • ${emojis.length} emojis` }
+        footer: {
+          text: `Página ${page + 1} de ${totalPages} • ${emojis.length} emojis • ${interaction.user.username}`,
+          icon: interaction.user.displayAvatarURL()
+        }
       });
     };
 

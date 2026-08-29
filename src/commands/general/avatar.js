@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS } from '../../utils/embeds.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -22,8 +22,13 @@ export default {
     const target = interaction.options.getUser('usuario') || interaction.user;
 
     const embed = createEmbed({
+      color: COLORS.GENERAL,
       title: `🖼️ Avatar de ${target.username}`,
-      image: { url: target.displayAvatarURL({ size: 4096, dynamic: true }) }
+      image: { url: target.displayAvatarURL({ size: 4096, dynamic: true }) },
+      footer: {
+        text: `Solicitado por ${interaction.user.username}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     await interaction.reply({ embeds: [embed] });

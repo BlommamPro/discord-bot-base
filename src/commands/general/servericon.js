@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { createEmbed, errorEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS, errorEmbed } from '../../utils/embeds.js';
 
 export default {
   CMD: new SlashCommandBuilder()
@@ -24,8 +24,13 @@ export default {
     }
 
     const embed = createEmbed({
+      color: COLORS.GENERAL,
       title: `🖼️ Icono de ${guild.name}`,
-      image: { url: guild.iconURL({ size: 4096, dynamic: true }) }
+      image: { url: guild.iconURL({ size: 4096, dynamic: true }) },
+      footer: {
+        text: `Solicitado por ${interaction.user.username}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     await interaction.reply({ embeds: [embed] });

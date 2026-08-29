@@ -24,7 +24,6 @@ export default {
     const guildId = message.guild.id;
     const now = Date.now();
 
-    // ===== XP GLOBAL =====
     if (!globalXpCooldowns.has(userId) || now - globalXpCooldowns.get(userId) > 60000) {
       globalXpCooldowns.set(userId, now);
 
@@ -57,11 +56,10 @@ export default {
       }
     }
 
-    // ===== XP POR SERVIDOR =====
     const levelConfig = await getLevelConfig(guildId);
     if (levelConfig.enabled) {
       const key = `${guildId}-${userId}`;
-      const cooldownMs = (levelConfig.cooldownSeconds || 60) * 1000;
+      const cooldownMs = Math.max((levelConfig.cooldownSeconds || 60) * 1000, 5000);
 
       if (!guildXpCooldowns.has(key) || now - guildXpCooldowns.get(key) > cooldownMs) {
         guildXpCooldowns.set(key, now);

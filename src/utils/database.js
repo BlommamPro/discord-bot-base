@@ -12,3 +12,26 @@ export async function connectDB() {
     process.exit(1);
   }
 }
+
+export async function disconnectDB() {
+  try {
+    await mongoose.disconnect();
+    logger.db('Desconectado de MongoDB');
+  } catch (err) {
+    logger.error('Error al desconectar de MongoDB:', err.message);
+  }
+}
+
+export function setupDBShutdown() {
+  process.on('SIGINT', async () => {
+    logger.warn('Recibida señal SIGINT, cerrando conexión...');
+    await disconnectDB();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    logger.warn('Recibida señal SIGTERM, cerrando conexión...');
+    await disconnectDB();
+    process.exit(0);
+  });
+}

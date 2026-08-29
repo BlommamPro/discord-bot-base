@@ -11,7 +11,9 @@ export const config = {
   color: process.env.COLOR || "#fcc706",
   errorColor: process.env.ERROR_COLOR || "#ED4245",
   cooldownColor: process.env.COOLDOWN_COLOR || "#f3a0fc",
-  ownerIds: process.env.OWNER_IDS?.split(" ") || [],
+  ownerIds: process.env.OWNER_IDS
+    ? process.env.OWNER_IDS.split(/[ ,]+/).filter((id) => id.trim())
+    : [],
 
   status: process.env.STATUS || "online",
   activity: {

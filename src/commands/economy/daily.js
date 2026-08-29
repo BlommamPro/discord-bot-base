@@ -1,16 +1,19 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-import { successEmbed, errorEmbed } from '../../utils/embeds.js';
-import { updateUserData } from '../../utils/guildData.js';
-import { checkDbCooldown, setDbCooldown } from '../../utils/economyCooldowns.js';
-import { checkAndAwardBadge, checkRichBadge } from '../../utils/badges.js';
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
+import { successEmbed, errorEmbed } from "../../utils/embeds.js";
+import { updateUserData } from "../../utils/guildData.js";
+import {
+  checkDbCooldown,
+  setDbCooldown,
+} from "../../utils/economyCooldowns.js";
+import { checkAndAwardBadge, checkRichBadge } from "../../utils/badges.js";
 
 const DAILY_REWARD = 100;
 const STREAK_BONUS = 50;
 
 export default {
   CMD: new SlashCommandBuilder()
-    .setName('daily')
-    .setDescription('Reclama tu recompensa diaria de coins')
+    .setName("daily")
+    .setDescription("Reclama tu recompensa diaria de coins")
     .setDMPermission(false),
 
   PERMISSIONS: [],
@@ -20,11 +23,15 @@ export default {
   GUILD_ONLY: true,
 
   async execute(client, interaction, guildData, userData) {
-    const cd = await checkDbCooldown(interaction.user.id, 'daily', 24 * 60);
+    const cd = await checkDbCooldown(interaction.user.id, "daily", 24 * 60);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Ya reclamaste tu daily. Vuelve <t:${cd.nextTimestamp}:R>.`)],
-        flags: MessageFlags.Ephemeral
+        embeds: [
+          errorEmbed(
+            `Ya reclamaste tu daily. Vuelve <t:${cd.nextTimestamp}:R>.`,
+          ),
+        ],
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -32,38 +39,52 @@ export default {
     let newStreak = 1;
     const isFirstDaily = !userData.lastDaily && !userData.cooldowns?.daily;
 
-    const lastDailyRaw = userData.lastDaily || userData.cooldowns?.daily;
-    if (lastDailyRaw) {
-      const lastMs = new Date(lastDailyRaw).getTime();
-      const diffHours = (nowMs - lastMs) / (1000 * 60 * 60);
-      if (diffHours >= 24 && diffHours < 48) {
-        newStreak = (userData.dailyStreak || 0) + 1;
+    const lastDaily = userData.cooldowns?.daily;
+    if (lastDaily) {
+      const lastDailyDate = new Date(lastDaily);
+      const diffHours = (nowMs - lastDailyDate.getTime()) / (1000 * 60 * 60);
+      
+      if (diffHours < 48) {
+        if (diffHours >= 24) {
+          newStreak = (userData.dailyStreak || 0) + 1;
+        } else {
+          newStreak = userData.dailyStreak || 1;
+        }
+      } else {
+        newStreak = 1;
       }
     }
 
-    const streakBonus = (newStreak > 1) ? STREAK_BONUS * (newStreak - 1) : 0;
+    const streakBonus = newStreak > 1 ? STREAK_BONUS * (newStreak - 1) : 0;
     const totalReward = DAILY_REWARD + streakBonus;
 
     await updateUserData(interaction.user.id, {
-      username: interaction.user.username,
       $inc: { balance: totalReward },
       dailyStreak: newStreak,
-      lastDaily: new Date(nowMs)
+      $set: { [`cooldowns.daily`]: new Date() },
     });
-    await setDbCooldown(interaction.user.id, 'daily');
+    
+    await setDbCooldown(interaction.user.id, "daily");
 
-    // ===== BADGES =====
-    if (isFirstDaily) await checkAndAwardBadge(interaction.user.id, 'early_bird', client);
-    if (newStreak === 7) await checkAndAwardBadge(interaction.user.id, 'streak_7', client);
-    if (newStreak === 30) await checkAndAwardBadge(interaction.user.id, 'streak_30', client);
+    if (isFirstDaily) {
+      await checkAndAwardBadge(interaction.user.id, "early_bird", client);
+    }
+    if (newStreak === 7) {
+      await checkAndAwardBadge(interaction.user.id, "streak_7", client);
+    }
+    if (newStreak === 30) {
+      await checkAndAwardBadge(interaction.user.id, "streak_30", client);
+    }
     await checkRichBadge(interaction.user.id, client);
 
     const embed = successEmbed(
       `Reclamaste **${totalReward} coins**!` +
-      (newStreak > 1 ? `\n🔥 Racha de **${newStreak} días**! (+${streakBonus} bonus)` : '')
+        (newStreak > 1
+          ? `\n🔥 Racha de **${newStreak} días**! (+${streakBonus} bonus)`
+          : ""),
     );
     embed.setFooter({ text: `Vuelve a reclamar 24H` });
 
     await interaction.reply({ embeds: [embed] });
-  }
+  },
 };

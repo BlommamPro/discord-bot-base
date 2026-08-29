@@ -65,7 +65,6 @@ export default {
     }
 
     if (type === 'coins') {
-      // FIX: sort por balance + bank (riqueza total)
       const top = await User.aggregate([
         { $addFields: { totalWealth: { $add: ['$balance', '$bank'] } } },
         { $sort: { totalWealth: -1 } },

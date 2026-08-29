@@ -117,6 +117,8 @@ export default {
       });
     }
 
+    const remainingBalance = wallet - amount;
+
     const cd = await checkDbCooldown(interaction.user.id, "blackjack", 0.17);
     if (cd.onCooldown) {
       return interaction.reply({
@@ -128,12 +130,10 @@ export default {
         flags: MessageFlags.Ephemeral,
       });
     }
-
-    // Restar apuesta
+    
     await updateUserData(interaction.user.id, { $inc: { balance: -amount } });
     await setDbCooldown(interaction.user.id, "blackjack");
 
-    // Crear y barajar mazo
     let deck = shuffle(createDeck());
 
     const playerHand = [deck.pop(), deck.pop()];
@@ -141,21 +141,17 @@ export default {
 
     const playerValue = handValue(playerHand);
     const dealerValue = handValue(dealerHand);
-
-    // Si el jugador tiene blackjack natural
     if (isBlackjack(playerHand)) {
       let winnings = 0;
       let resultText = "";
 
       if (isBlackjack(dealerHand)) {
-        // Empate - devolver apuesta
         await updateUserData(interaction.user.id, {
           $inc: { balance: amount },
         });
         resultText =
           "¡Ambos tienen Blackjack! Es un **empate**. Recuperas tu apuesta.";
       } else {
-        // Blackjack paga 3:2
         winnings = Math.floor(amount * 1.5);
         await updateUserData(interaction.user.id, {
           $inc: { balance: amount + winnings },
@@ -182,8 +178,6 @@ export default {
 
       return interaction.reply({ embeds: [embed] });
     }
-
-    // Si el dealer tiene blackjack (y el jugador no)
     if (isBlackjack(dealerHand)) {
       const embed = createEmbed({
         title: "🃏 Blackjack — Perdiste",
@@ -201,8 +195,6 @@ export default {
 
       return interaction.reply({ embeds: [embed] });
     }
-
-    // Juego normal con botones
     const gameId = Date.now().toString(36);
     let currentBet = amount;
     let doubled = false;
@@ -240,7 +232,7 @@ export default {
           .setLabel("🛑 Plantarse (Stand)")
           .setStyle(ButtonStyle.Success),
       );
-      if (canDouble && !doubled && wallet >= amount) {
+      if (canDouble && !doubled && remainingBalance >= amount) {
         row.addComponents(
           new ButtonBuilder()
             .setCustomId(`bj_double_${interaction.user.id}_${gameId}`)
@@ -314,8 +306,6 @@ export default {
       if (gameOver) return;
       gameOver = true;
       collector.stop();
-
-      // Dealer juega hasta 17 o más
       while (handValue(dealerHand) < 17) {
         dealerHand.push(deck.pop());
       }
@@ -404,7 +394,7 @@ export default {
       } else if (action === "stand") {
         return resolveDealer(i);
       } else if (action === "double") {
-        if (wallet < amount) {
+        if (remainingBalance < amount) {
           return i.reply({
             embeds: [errorEmbed("No tienes suficiente dinero para doblar.")],
             flags: MessageFlags.Ephemeral,
@@ -433,7 +423,6 @@ export default {
 
     collector.on("end", async (_, reason) => {
       if (reason === "time" && !gameOver) {
-        // Devolver apuesta si expiró
         await updateUserData(interaction.user.id, {
           $inc: { balance: currentBet },
         });
@@ -445,7 +434,6 @@ export default {
             components: [],
           });
         } catch {
-          /* mensaje borrado */
         }
       }
     });

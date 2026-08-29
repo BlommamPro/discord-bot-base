@@ -1,5 +1,5 @@
-import { GuildLevel } from '../models/GuildLevel.js';
-import { LevelConfig } from '../models/LevelConfig.js';
+import { GuildLevel } from "../models/GuildLevel.js";
+import { LevelConfig } from "../models/LevelConfig.js";
 
 export async function getGuildLevel(guildId, userId) {
   let data = await GuildLevel.findOne({ guildId, userId });
@@ -14,16 +14,25 @@ export async function addGuildXp(guildId, userId, amount) {
   let newXp = data.xp + amount;
   let newLevel = data.level;
   let leveledUp = false;
+  let safety = 0;
 
-  while (newXp >= getXpForLevel(newLevel)) {
+  while (newXp >= getXpForLevel(newLevel) && safety < 100) {
     newXp -= getXpForLevel(newLevel);
     newLevel++;
     leveledUp = true;
+    safety++;
+  }
+
+  if (safety >= 100) {
+    logger.warn(
+      `Posible bucle infinito en addGuildXp para ${userId} en ${guildId}`,
+    );
+    return { leveledUp: false, newLevel: data.level, newXp: data.xp };
   }
 
   await GuildLevel.updateOne(
     { guildId, userId },
-    { xp: newXp, level: newLevel, $inc: { messages: 1 } }
+    { xp: newXp, level: newLevel, $inc: { messages: 1 } },
   );
 
   return { leveledUp, newLevel, newXp };
@@ -42,11 +51,10 @@ export async function getLevelConfig(guildId) {
 }
 
 export async function updateLevelConfig(guildId, update) {
-  return await LevelConfig.findOneAndUpdate(
-    { guildId },
-    update,
-    { new: true, upsert: true }
-  );
+  return await LevelConfig.findOneAndUpdate({ guildId }, update, {
+    new: true,
+    upsert: true,
+  });
 }
 
 export async function getGuildLeaderboard(guildId, limit = 10) {
