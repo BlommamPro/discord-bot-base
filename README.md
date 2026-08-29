@@ -12,13 +12,15 @@ Un bot de Discord modular y completo construido con **Discord.js v14** y **Mongo
 - [Scripts Disponibles](#-scripts-disponibles)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Módulos y Sistemas](#-módulos-y-sistemas)
-- [Estructura de Comandos](#-estructura-de-un-comando)
-- [Estructura de Componentes](#-estructura-de-un-componente)
+- [Estructura de un Comando](#-estructura-de-un-comando)
+- [Estructura de un Componente](#-estructura-de-un-componente)
 - [Modelos de Base de Datos](#-modelos-de-base-de-datos)
 - [Variables de Entorno](#-variables-de-entorno)
 - [Manejo de Errores](#-manejo-de-errores)
 - [Contribuciones](#-contribuciones)
+- [Apóyanos](#-apóyanos)
 - [Licencia](#-licencia)
+- [Soporte y Contacto](#-soporte-y-contacto)
 
 ---
 
@@ -83,7 +85,7 @@ LANGUAGE=es
 COLOR=#FF8C00
 ERROR_COLOR=#ED4245
 COOLDOWN_COLOR=#FEE75C
-OWNER_IDS=ID_DEL_OWNER
+OWNER_IDS=TU_ID_AQUI
 SUPPORT_CHANNEL_ID=ID_CANAL_SOPORTE
 
 # ===== ESTADO =====
@@ -96,7 +98,7 @@ ACTIVITY_NAME="Discord.js v14"
 
 ### 4. Desplegar comandos
 
-Para desplegar los comandos en tu servidor de prueba (si configuraste `GUILD_ID`):
+Para desplegar los comandos en tu servidor de prueba (si configuraste `GUILD_ID` en tu archivo `.env`):
 
 ```bash
 pnpm run cmd:deploy
@@ -107,6 +109,8 @@ Para desarrollo:
 ```bash
 pnpm run cmd:deploy:dev
 ```
+
+> **Nota sobre `GUILD_ID`:** Esta variable es **opcional**. Si la configuras, los comandos se desplegarán de forma instantánea solo en ese servidor (ideal para pruebas). Si no la configuras, los comandos se desplegarán de forma global y pueden tardar hasta 1 hora en aparecer en todos los servidores.
 
 ---
 
@@ -320,6 +324,7 @@ export default {
 | `ERROR_COLOR` | Color para errores | ❌ No (por defecto: #ED4245) |
 | `COOLDOWN_COLOR` | Color para cooldowns | ❌ No (por defecto: #f3a0fc) |
 | `OWNER_IDS` | IDs de los owners (separados por espacio) | ❌ No |
+| `GUILD_ID` | ID del servidor para despliegue rápido (opcional) | ❌ No |
 | `SUPPORT_CHANNEL_ID` | ID del canal para reportes de errores | ❌ No |
 | `STATUS` | Estado del bot (online/idle/dnd/invisible) | ❌ No (por defecto: online) |
 | `ACTIVITY_TYPE` | Tipo de actividad (Playing/Listening/Watching) | ❌ No (por defecto: Playing) |
@@ -428,6 +433,12 @@ Si tienes alguna pregunta sobre cómo contribuir, puedes:
 - Unirte al [servidor de soporte en Discord](https://discord.gg/U9PARbw2xS).
 - Abrir un Issue en GitHub con tu consulta.
 - Contactar directamente al owner: [BlommamPro en Discord](https://discord.com/users/536717287567392768).
+
+---
+
+## ⭐ Apóyanos
+
+Si este proyecto te ha sido útil, considera darle una estrella ⭐ en [GitHub](https://github.com/BlommamPro/discord-bot-base) y compartirlo con otros desarrolladores.
 
 ---
 
