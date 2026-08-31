@@ -52,7 +52,7 @@ export function createEmbed(options = {}) {
   if (options.footer) {
     embed.setFooter({
       text: options.footer.text,
-      iconURL: options.footer.icon
+      iconURL: options.footer.icon || BRANDING.LOGO_URL
     });
   } else {
     embed.setFooter({ 
@@ -68,6 +68,7 @@ export function createEmbed(options = {}) {
   return embed;
 }
 
+// ===== EMBEDS PREDEFINIDOS =====
 
 export function successEmbed(description, title = `${EMOJIS.SUCCESS} Éxito`) {
   return createEmbed({
@@ -144,8 +145,26 @@ export function giveawayEmbed(description, title = `${EMOJIS.GIVEAWAY} Sorteo`) 
 export function cooldownEmbed(timeLeft) {
   return createEmbed({
     color: config.cooldownColor || 0xFEE75C,
-    title: `${EMOJIS.WARNING} En cooldown`,
+    title: `${EMOJIS.TIMER} En cooldown`,
     description: `⏳ Espera **${timeLeft}** segundos antes de usar esto.`,
     thumbnail: ICONS.WARNING,
+  });
+}
+
+export function clearEmbed(description, title = `${EMOJIS.CLEAR} Mensajes Borrados`) {
+  return createEmbed({
+    color: COLORS.SUCCESS,
+    title: title,
+    description: description,
+    thumbnail: ICONS.CLEAR,
+  });
+}
+
+export function bankEmbed(description, title = `${EMOJIS.BANK} Banco`) {
+  return createEmbed({
+    color: COLORS.ECONOMY,
+    title: title,
+    description: description,
+    thumbnail: ICONS.ECONOMY,
   });
 }

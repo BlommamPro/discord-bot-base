@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, COLORS } from '../../utils/embeds.js';
+import { createProgressBar, formatPercentage } from '../../utils/embedDecorations.js';
 import { getUserData } from '../../utils/guildData.js';
 import { getGuildLevel } from '../../utils/levelSystem.js';
 import { getAllBadgesText } from '../../utils/badges.js';
@@ -12,7 +13,7 @@ function getGlobalXpForLevel(level) {
 export default {
   CMD: new SlashCommandBuilder()
     .setName('profile')
-    .setDescription('Muestra tu perfil o el de otro usuario')
+    .setDescription('👤 Muestra tu perfil o el de otro usuario')
     .setDMPermission(false)
     .addUserOption(opt =>
       opt.setName('usuario')
@@ -32,31 +33,44 @@ export default {
 
     const guildLevelData = await getGuildLevel(interaction.guildId, target.id);
     const guildXpNeeded = getXpForLevel(guildLevelData.level);
-    const guildProgress = Math.round((guildLevelData.xp / guildXpNeeded) * 100);
+    const guildProgress = formatPercentage(guildLevelData.xp, guildXpNeeded);
+    const guildBar = createProgressBar(guildLevelData.xp, guildXpNeeded, 16);
 
     const globalXpNeeded = getGlobalXpForLevel(data.level);
-    const globalProgress = Math.round((data.xp / globalXpNeeded) * 100);
+    const globalProgress = formatPercentage(data.xp, globalXpNeeded);
+    const globalBar = createProgressBar(data.xp, globalXpNeeded, 16);
 
     const wallet = data?.balance || 0;
     const bank = data?.bank || 0;
     const total = wallet + bank;
 
     const embed = createEmbed({
+      color: COLORS.LEVELING,
       title: `👤 Perfil de ${target.username}`,
       thumbnail: target.displayAvatarURL({ dynamic: true, size: 256 }),
-      fields: [
-        { name: '💰 En Mano', value: `\`${wallet} coins\``, inline: true },
-        { name: '🏦 Banco', value: `\`${bank} coins\``, inline: true },
-        { name: '📊 Total', value: `\`${total} coins\``, inline: true },
-        { name: '🏠 Nivel Servidor', value: `\`${guildLevelData.level}\` (${guildProgress}%)`, inline: true },
-        { name: '🌍 Nivel Global', value: `\`${data.level}\` (${globalProgress}%)`, inline: true },
-        { name: '✨ XP Servidor', value: `\`${guildLevelData.xp}/${guildXpNeeded}\``, inline: true },
-        { name: '✨ XP Global', value: `\`${data.xp}/${globalXpNeeded}\``, inline: true },
-        { name: '💬 Mensajes', value: `\`${data.messages}\``, inline: true },
-        { name: '🔥 Racha Diaria', value: `\`${data.dailyStreak} días\``, inline: true },
-        { name: '🎖️ Badges', value: getAllBadgesText(data.badges) || 'Ninguna', inline: false },
-        { name: '📅 Cuenta creada', value: `<t:${Math.floor(target.createdTimestamp / 1000)}:R>`, inline: true }
-      ]
+      description: [
+        `📅 **Cuenta creada:** <t:${Math.floor(target.createdTimestamp / 1000)}:R>`,
+        `💬 **Mensajes:** \`${data.messages || 0}\``,
+        `🔥 **Racha diaria:** \`${data.dailyStreak || 0} días\``,
+        '',
+        `💰 **Economía**`,
+        `💵 En mano: \`${wallet} coins\``,
+        `🏦 Banco: \`${bank} coins\``,
+        `📊 Total: \`${total} coins\``,
+        '',
+        `⭐ **Niveles**`,
+        `🏠 Servidor: Nivel \`${guildLevelData.level}\``,
+        `\`${guildBar}\` \`${guildProgress}%\``,
+        `🌍 Global: Nivel \`${data.level}\``,
+        `\`${globalBar}\` \`${globalProgress}%\``,
+        '',
+        `🎖️ **Insignias**`,
+        getAllBadgesText(data.badges) || '`Ninguna`'
+      ].join('\n'),
+      footer: {
+        text: `Solicitado por ${interaction.user.username}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     await interaction.reply({ embeds: [embed] });

@@ -1,3 +1,5 @@
+import { emojis, e } from './emojis.js';
+
 export const COLORS = {
   SUCCESS: 0x57F287,
   ERROR: 0xED4245,
@@ -19,16 +21,23 @@ export const BRANDING = {
 };
 
 export const EMOJIS = {
-  SUCCESS: '✅',
-  ERROR: '❌',
-  WARNING: '⚠️',
-  INFO: 'ℹ️',
-  ECONOMY: '💰',
+  SUCCESS: emojis.check || '✅',
+  ERROR: emojis.cross || '❌',
+  WARNING: emojis.warning || '⚠️',
+  INFO: emojis.infor || 'ℹ️',
+  ECONOMY: emojis.coin || '💰',
   LEVELING: '⭐',
-  MODERATION: '🛡️',
+  MODERATION: emojis.mute || '🛡️',
   GIVEAWAY: '🎁',
   GENERAL: '🌐',
   OWNER: '👑',
+  CLEAR: emojis.clear || '🧹',
+  BANK: emojis.bank || '🏦',
+  ON: emojis.on || '✅',
+  OFF: emojis.off || '❌',
+  LOADING: emojis.load || '⏳',
+  PING: emojis.pingconnetion || '📡',
+  TIMER: emojis.timersand || '⏱️',
 };
 
 export const ICONS = {
@@ -40,4 +49,5 @@ export const ICONS = {
   LEVELING: 'https://cdn-icons-png.flaticon.com/512/3101/3101455.png',
   MODERATION: 'https://cdn-icons-png.flaticon.com/512/545/545665.png',
   GIVEAWAY: 'https://cdn-icons-png.flaticon.com/512/3144/3144456.png',
+  CLEAR: 'https://cdn-icons-png.flaticon.com/128/3286/3286176.png',
 };

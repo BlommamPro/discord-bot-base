@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType , MessageFlags} from 'discord.js';
-import { successEmbed, errorEmbed } from '../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
+import { successEmbed, errorEmbed, clearEmbed } from '../../utils/embeds.js';
 import { emojis } from '../../utils/emojis.js';
 
 export default {
@@ -77,12 +77,11 @@ export default {
         deletedCount = deleted.size;
       }
 
-      const embed = successEmbed(
+      const embed = clearEmbed(
         `**Canal:** ${targetChannel}\n` +
         `**Mensajes borrados:** ${deletedCount}` +
         (targetUser ? `\n**Filtrado por:** ${targetUser}` : '')
       );
-      embed.setTitle(`${emojis.clear} Mensajes Borrados`);
 
       await interaction.editReply({ embeds: [embed] });
 
