@@ -9,7 +9,7 @@ import { User } from '../../models/User.js';
 export default {
   CMD: new SlashCommandBuilder()
     .setName('buy')
-    .setDescription('Compra un item de la tienda')
+    .setDescription('🛒 Compra un item de la tienda')
     .setDMPermission(false)
     .addStringOption(opt =>
       opt.setName('item')
@@ -36,47 +36,75 @@ export default {
     const cd = await checkDbCooldown(interaction.user.id, 'buy', 0.08);
     if (cd.onCooldown) {
       return interaction.reply({
-        embeds: [errorEmbed(`Espera un momento antes de comprar de nuevo. <t:${cd.nextTimestamp}:R>.`)],
+        embeds: [errorEmbed(`⏳ Espera un momento antes de comprar de nuevo. <t:${cd.nextTimestamp}:R>.`)],
         flags: MessageFlags.Ephemeral
       });
     }
 
     const item = await getShopItem(interaction.guildId, itemId);
     if (!item) {
-      return interaction.reply({ embeds: [errorEmbed('Ese item no existe en la tienda.')], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        embeds: [errorEmbed('❌ Ese item no existe en la tienda.')],
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    if (!item.enabled) {
+      return interaction.reply({
+        embeds: [errorEmbed('❌ Este item está actualmente desactivado.')],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const totalPrice = item.price * quantity;
 
     if ((userData?.balance || 0) < totalPrice) {
       return interaction.reply({
-        embeds: [errorEmbed(`No tienes suficientes coins. Necesitas **${totalPrice} coins** y tienes **${userData.balance}**.`)],
+        embeds: [errorEmbed(`❌ No tienes suficientes coins. Necesitas **${totalPrice} coins** y tienes **${userData.balance}**.`)],
         flags: MessageFlags.Ephemeral
       });
     }
 
     if (item.stock >= 0 && item.stock < quantity) {
       return interaction.reply({
-        embeds: [errorEmbed(`No hay suficiente stock. Quedan **${item.stock}** unidades.`)],
+        embeds: [errorEmbed(`❌ No hay suficiente stock. Quedan **${item.stock}** unidades.`)],
         flags: MessageFlags.Ephemeral
       });
     }
 
     if (item.roleId) {
       const role = interaction.guild.roles.cache.get(item.roleId);
-      if (!role) {
-        return interaction.reply({ embeds: [errorEmbed('El rol asociado a este item ya no existe.')], flags: MessageFlags.Ephemeral });
+      if (role) {
+        if (interaction.member.roles.cache.has(role.id)) {
+          return interaction.reply({
+            embeds: [errorEmbed(`❌ Ya tienes el rol ${role}. No puedes comprarlo de nuevo.`)],
+            flags: MessageFlags.Ephemeral
+          });
+        }
       }
 
       const botMember = interaction.guild.members.me;
-      if (!botMember.permissions.has('ManageRoles') || role.position >= botMember.roles.highest.position) {
-        return interaction.reply({ embeds: [errorEmbed('No tengo permisos para darte ese rol.')], flags: MessageFlags.Ephemeral });
+      if (!botMember.permissions.has('ManageRoles')) {
+        return interaction.reply({
+          embeds: [errorEmbed('❌ No tengo permiso para gestionar roles.')],
+          flags: MessageFlags.Ephemeral
+        });
+      }
+
+      if (role && role.position >= botMember.roles.highest.position) {
+        return interaction.reply({
+          embeds: [errorEmbed(`❌ El rol ${role} está por encima de mi rol más alto. No puedo asignarlo.`)],
+          flags: MessageFlags.Ephemeral
+        });
       }
 
       try {
         await interaction.member.roles.add(role);
       } catch {
-        return interaction.reply({ embeds: [errorEmbed('No pude darte el rol.')], flags: MessageFlags.Ephemeral });
+        return interaction.reply({
+          embeds: [errorEmbed('❌ No pude darte el rol.')],
+          flags: MessageFlags.Ephemeral
+        });
       }
     }
 
@@ -116,7 +144,7 @@ export default {
     if (newTotal >= 10) await checkAndAwardBadge(interaction.user.id, 'shopaholic', client);
 
     const embed = successEmbed(
-      `Compraste **${quantity}x ${item.name}** por **${totalPrice} coins**!` +
+      `✅ Compraste **${quantity}x ${item.name}** por **${totalPrice} coins**!` +
       (item.roleId ? `\n🎁 Se te ha otorgado el rol <@&${item.roleId}>` : '')
     );
     embed.setTitle('🛒 Compra Exitosa');

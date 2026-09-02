@@ -1,7 +1,8 @@
-import { SlashCommandBuilder, PermissionFlagsBits , MessageFlags} from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed } from '../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
+import { createEmbed, errorEmbed, successEmbed, COLORS } from '../../utils/embeds.js';
 import { Giveaway } from '../../models/Giveaway.js';
 import { parseTime } from '../../utils/parseTime.js';
+import { getLevelConfig } from '../../utils/levelSystem.js';
 
 function generateGiveawayId() {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -10,7 +11,7 @@ function generateGiveawayId() {
 export default {
   CMD: new SlashCommandBuilder()
     .setName('giveaway')
-    .setDescription('Crea un sorteo en el servidor')
+    .setDescription('🎁 Crea un sorteo en el servidor')
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents)
     .addStringOption(opt =>
@@ -31,9 +32,25 @@ export default {
          .setMaxValue(10)
     )
     .addRoleOption(opt =>
-      opt.setName('rol_requerido')
-         .setDescription('Solo usuarios con este rol pueden participar')
+      opt.setName('rol')
+         .setDescription('🎭 Rol requerido para participar (opcional)')
          .setRequired(false)
+    )
+    .addIntegerOption(opt =>
+      opt.setName('nivel')
+         .setDescription('⭐ Nivel mínimo requerido para participar (opcional)')
+         .setRequired(false)
+         .setMinValue(1)
+         .setMaxValue(100)
+    )
+    .addStringOption(opt =>
+      opt.setName('tipo_nivel')
+         .setDescription('Tipo de nivel (global o servidor)')
+         .setRequired(false)
+         .addChoices(
+           { name: '🌍 Global', value: 'global' },
+           { name: '🏠 Servidor', value: 'guild' }
+         )
     ),
 
   PERMISSIONS: ['ManageEvents'],
@@ -46,16 +63,59 @@ export default {
     const prize = interaction.options.getString('premio');
     const durationStr = interaction.options.getString('duracion');
     const winnerCount = interaction.options.getInteger('ganadores') || 1;
-    const requiredRole = interaction.options.getRole('rol_requerido');
+    
+    const requiredRole = interaction.options.getRole('rol');
+    const requiredLevel = interaction.options.getInteger('nivel');
+    const levelType = interaction.options.getString('tipo_nivel') || 'guild';
 
     const parsed = parseTime(durationStr);
     if (!parsed) {
       return interaction.reply({
-        embeds: [errorEmbed('Formato de tiempo inválido. Usa: `1h`, `30m`, `1d`, `2d12h`...')], flags: MessageFlags.Ephemeral });
+        embeds: [errorEmbed('❌ Formato de tiempo inválido. Usa: `1h`, `30m`, `1d`, `2d12h`...')],
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    if (requiredLevel) {
+      const levelConfig = await getLevelConfig(interaction.guildId);
+      if (!levelConfig.enabled) {
+        return interaction.reply({
+          embeds: [errorEmbed('❌ El sistema de niveles no está activo en este servidor. No se puede requerir nivel.')],
+          flags: MessageFlags.Ephemeral
+        });
+      }
+    }
+
+    const activeGiveaways = await Giveaway.countDocuments({
+      guildId: interaction.guildId,
+      ended: false
+    });
+
+    const MAX_GIVEAWAYS = 3;
+
+    if (activeGiveaways >= MAX_GIVEAWAYS) {
+      return interaction.reply({
+        embeds: [errorEmbed(
+          `❌ **Límite de sorteos activos alcanzado.**\n` +
+          `Este servidor tiene **${activeGiveaways}** sorteos activos de **${MAX_GIVEAWAYS}** permitidos.\n\n` +
+          `💡 Espera a que finalice uno para crear otro.`
+        )],
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const endTime = Date.now() + parsed.ms;
     const giveawayId = generateGiveawayId();
+
+    const requirements = [];
+    if (requiredRole) {
+      requirements.push(`**Requisito de Rol:** <@&${requiredRole.id}>`);
+    }
+    if (requiredLevel) {
+      const levelLabel = levelType === 'global' ? 'Global' : 'Servidor';
+      requirements.push(`**Requisito de Nivel:** ${requiredLevel} (${levelLabel})`);
+    }
+
     const descriptionLines = [
       `**Premio:** ${prize}`,
       `**Ganadores:** ${winnerCount}`,
@@ -63,16 +123,20 @@ export default {
       `**Participantes:** 0`,
     ];
 
-    if (requiredRole) {
-      descriptionLines.push(`**Requisito:** Tener el rol <@&${requiredRole.id}>`);
+    if (requirements.length > 0) {
+      descriptionLines.push('', ...requirements);
     }
 
     descriptionLines.push('', 'Reacciona con 🎉 para participar');
 
     const embed = createEmbed({
+      color: COLORS.GIVEAWAY,
       title: '🎉 Nuevo Sorteo',
       description: descriptionLines.join('\n'),
-      footer: { text: `ID: ${giveawayId} • Creado por ${interaction.user.tag}` }
+      footer: { 
+        text: `ID: ${giveawayId} • Creado por ${interaction.user.tag}`,
+        icon: interaction.user.displayAvatarURL()
+      }
     });
 
     const msg = await interaction.channel.send({ embeds: [embed] });
@@ -89,12 +153,26 @@ export default {
       hostedBy: interaction.user.tag,
       hostedById: interaction.user.id,
       requiredRoleId: requiredRole?.id || null,
+      requiredLevel: requiredLevel || null,
+      requiredLevelType: requiredLevel ? levelType : null,
       participants: [],
       winners: [],
       ended: false
     });
 
+    const remaining = MAX_GIVEAWAYS - (activeGiveaways + 1);
+    const reqText = [];
+    if (requiredRole) reqText.push(`rol ${requiredRole}`);
+    if (requiredLevel) reqText.push(`nivel ${requiredLevel} (${levelType})`);
+
     await interaction.reply({
-      embeds: [successEmbed(`Sorteo creado con ID \`${giveawayId}\`. Termina ${parsed.text}.`)], flags: MessageFlags.Ephemeral });
+      embeds: [successEmbed(
+        `✅ Sorteo creado con ID \`${giveawayId}\`.\n` +
+        `⏱️ Termina en ${parsed.text}.\n` +
+        (reqText.length > 0 ? `📋 Requisitos: ${reqText.join(' y ')}\n` : '📋 Sin requisitos especiales.\n') +
+        `📊 **Sorteos activos:** ${activeGiveaways + 1} de ${MAX_GIVEAWAYS} (${remaining} disponibles)`
+      )],
+      flags: MessageFlags.Ephemeral
+    });
   }
 };

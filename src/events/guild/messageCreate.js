@@ -57,41 +57,49 @@ export default {
     }
 
     const levelConfig = await getLevelConfig(guildId);
-    if (levelConfig.enabled) {
-      const key = `${guildId}-${userId}`;
-      const cooldownMs = Math.max((levelConfig.cooldownSeconds || 60) * 1000, 5000);
+    if (!levelConfig.enabled) return;
 
-      if (!guildXpCooldowns.has(key) || now - guildXpCooldowns.get(key) > cooldownMs) {
-        guildXpCooldowns.set(key, now);
+    if (levelConfig.ignoredChannels?.includes(message.channelId)) {
+      return;
+    }
 
-        const xpAmount = Math.floor(
-          Math.random() * ((levelConfig.xpMax || 25) - (levelConfig.xpMin || 15) + 1)
-        ) + (levelConfig.xpMin || 15);
+    const key = `${guildId}-${userId}`;
+    const cooldownMs = Math.max((levelConfig.cooldownSeconds || 60) * 1000, 5000);
 
-        const result = await addGuildXp(guildId, userId, xpAmount);
+    if (!guildXpCooldowns.has(key) || now - guildXpCooldowns.get(key) > cooldownMs) {
+      guildXpCooldowns.set(key, now);
 
-        if (result.leveledUp) {
-          const roleConfig = levelConfig.roles?.find(r => r.level === result.newLevel);
-          if (roleConfig) {
-            const member = message.member;
-            if (member && !member.roles.cache.has(roleConfig.roleId)) {
-              const role = message.guild.roles.cache.get(roleConfig.roleId);
-              if (role && role.position < message.guild.members.me.roles.highest.position) {
-                await member.roles.add(role).catch(() => {});
-              }
+      const xpAmount = Math.floor(
+        Math.random() * ((levelConfig.xpMax || 25) - (levelConfig.xpMin || 15) + 1)
+      ) + (levelConfig.xpMin || 15);
+
+      const result = await addGuildXp(guildId, userId, xpAmount);
+
+      if (result.leveledUp) {
+        const roleConfig = levelConfig.roles?.find(r => r.level === result.newLevel);
+        if (roleConfig) {
+          const member = message.member;
+          if (member && !member.roles.cache.has(roleConfig.roleId)) {
+            const role = message.guild.roles.cache.get(roleConfig.roleId);
+            if (role && role.position < message.guild.members.me.roles.highest.position) {
+              await member.roles.add(role).catch(() => {});
             }
           }
-
-          if (levelConfig.announceChannel) {
-            const channel = message.guild.channels.cache.get(levelConfig.announceChannel);
-            if (channel?.isTextBased()) {
-              await channel.send(`🎉 ¡<@${userId}> ha subido al nivel **${result.newLevel}**!`)
-                .catch(() => {});
-            }
-          }
-
-          logger.success(`${message.author.tag} subió al nivel ${result.newLevel} en ${message.guild.name}`);
         }
+
+        if (levelConfig.announceChannel) {
+          const channel = message.guild.channels.cache.get(levelConfig.announceChannel);
+          if (channel?.isTextBased()) {
+            const messageTemplate = levelConfig.levelUpMessage || '🎉 ¡{user} ha subido al nivel **{level}**!';
+            const finalMessage = messageTemplate
+              .replace(/{user}/g, `<@${userId}>`)
+              .replace(/{level}/g, result.newLevel);
+            
+            await channel.send(finalMessage).catch(() => {});
+          }
+        }
+
+        logger.success(`${message.author.tag} subió al nivel ${result.newLevel} en ${message.guild.name}`);
       }
     }
   }

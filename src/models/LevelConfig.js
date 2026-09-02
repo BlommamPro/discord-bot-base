@@ -8,6 +8,11 @@ const LevelConfigSchema = new mongoose.Schema({
     roleId: { type: String, required: true }
   }],
   announceChannel: { type: String, default: null },
+  levelUpMessage: { 
+    type: String, 
+    default: '🎉 ¡{user} ha subido al nivel **{level}**!' 
+  },
+  ignoredChannels: { type: [String], default: [] },
   xpMin: { type: Number, default: 15 },
   xpMax: { type: Number, default: 25 },
   cooldownSeconds: { type: Number, default: 60 }

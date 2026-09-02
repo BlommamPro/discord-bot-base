@@ -4,6 +4,10 @@ export async function getShopItems(guildId) {
   return await ShopItem.find({ guildId, enabled: true }).sort({ price: 1 });
 }
 
+export async function getAllShopItems(guildId) {
+  return await ShopItem.find({ guildId }).sort({ price: 1 });
+}
+
 export async function getShopItem(guildId, itemId) {
   return await ShopItem.findOne({ guildId, itemId: itemId.toLowerCase(), enabled: true });
 }
@@ -28,6 +32,14 @@ export async function updateShopItemStock(guildId, itemId, newStock) {
   return await ShopItem.findOneAndUpdate(
     { guildId, itemId: itemId.toLowerCase() },
     { stock: newStock },
+    { new: true }
+  );
+}
+
+export async function updateShopItem(guildId, itemId, updateData) {
+  return await ShopItem.findOneAndUpdate(
+    { guildId, itemId: itemId.toLowerCase() },
+    updateData,
     { new: true }
   );
 }

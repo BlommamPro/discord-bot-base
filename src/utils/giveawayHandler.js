@@ -1,5 +1,5 @@
 import { Giveaway } from '../models/Giveaway.js';
-import { createEmbed } from './embeds.js';
+import { createEmbed, COLORS } from './embeds.js';
 import { logger } from './logger.js';
 
 export async function getActiveGiveaways() {
@@ -66,12 +66,18 @@ export async function endGiveaway(client, giveawayId, guildId = null) {
   ];
 
   if (gw.requiredRoleId) {
-    finalLines.push(`**Requisito:** <@&${gw.requiredRoleId}>`);
+    finalLines.push(`**Requisito de Rol:** <@&${gw.requiredRoleId}>`);
+  }
+
+  if (gw.requiredLevel) {
+    const levelLabel = gw.requiredLevelType === 'global' ? 'Global' : 'Servidor';
+    finalLines.push(`**Requisito de Nivel:** ${gw.requiredLevel} (${levelLabel})`);
   }
 
   finalLines.push(`**ID:** \`${gw.giveawayId}\``);
 
   const embed = createEmbed({
+    color: COLORS.GIVEAWAY,
     title: '🎉 Sorteo Finalizado',
     description: finalLines.join('\n'),
     footer: { text: `Finalizado • ID: ${gw.giveawayId}` }
@@ -131,13 +137,25 @@ export async function updateGiveawayEmbed(message, giveawayId) {
     `**Participantes:** ${gw.participants.length}`,
   ];
 
+  const requirements = [];
+
   if (gw.requiredRoleId) {
-    descriptionLines.push(`**Requisito:** <@&${gw.requiredRoleId}>`);
+    requirements.push(`**Requisito de Rol:** <@&${gw.requiredRoleId}>`);
+  }
+
+  if (gw.requiredLevel) {
+    const levelLabel = gw.requiredLevelType === 'global' ? 'Global' : 'Servidor';
+    requirements.push(`**Requisito de Nivel:** ${gw.requiredLevel} (${levelLabel})`);
+  }
+
+  if (requirements.length > 0) {
+    descriptionLines.push('', ...requirements);
   }
 
   descriptionLines.push('', 'Reacciona con 🎉 para participar');
 
   const embed = createEmbed({
+    color: COLORS.GIVEAWAY,
     title: '🎉 Sorteo',
     description: descriptionLines.join('\n'),
     footer: { text: `ID: ${gw.giveawayId} • Creado por ${gw.hostedBy}` }
@@ -145,7 +163,6 @@ export async function updateGiveawayEmbed(message, giveawayId) {
 
   try {
     await message.edit({ embeds: [embed] });
-
     gw.lastEdit = new Date();
     await gw.save();
   } catch { /* ignorar */ }
